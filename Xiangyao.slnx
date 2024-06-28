@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src\Xiangyao\Xiangyao.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="Dockerfile" />
+  </Folder>
+  <Folder Name="/contrib/">
+    <Project Path="contrib\LettuceEncrypt\src\Kestrel.Certificates\McMaster.AspNetCore.Kestrel.Certificates.csproj" />
+    <Project Path="contrib\LettuceEncrypt\src\LettuceEncrypt\LettuceEncrypt.csproj" />
+  </Folder>
+</Solution>

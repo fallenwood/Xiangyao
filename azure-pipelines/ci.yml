@@ -1,0 +1,9 @@
+trigger:
+  branches:
+    include:
+    - refs/heads/master
+
+extends:
+  template: template.yml
+  parameters:
+    pipelineType: 'Official'
