@@ -1,0 +1,20 @@
+services:
+  xiangyao:
+    build:
+      context: "../../"
+    volumes:
+    - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+    - "ASPNETCORE_URLS=http://*:5000"
+    command:
+    - "--provider=docker"
+    network_mode: "host"
+
+  nginx:
+    image: "docker.io/nginx:alpine"
+    labels:
+    - "xiangyao.enable=true"
+    - "xiangyao.cluster.port=80"
+    - "xiangyao.cluster.schema=http"
+    - "xiangyao.routes.nginx_http.match.host=localhost:5000"
+    - "xiangyao.routes.nginx_http.match.path={**catch-all}"
