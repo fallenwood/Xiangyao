@@ -2,7 +2,7 @@ Xiangyao
 ---
 
 ## Introduction
-Xiangyao (相繇) is a reserved proxy integrated with YARP, Docker.Net and LettuceEncrypt.
+Xiangyao (相繇) is a reverse proxy integrated with YARP, Docker.Net and LettuceEncrypt.
 
 ## Usage
 
