@@ -10,10 +10,8 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\contrib\LettuceEncrypt\src\LettuceEncrypt\LettuceEncrypt.csproj" />
+    <PackageReference Include="Fallenwood.LettuceEncrypt" />
+    <PackageReference Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" />
   </ItemGroup>
 
 </Project>
