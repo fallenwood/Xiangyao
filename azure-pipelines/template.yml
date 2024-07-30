@@ -17,7 +17,7 @@ jobs:
 
   - task: Docker@2
     inputs:
-      containerRegistry: 'dockerhub'
+      containerRegistry: 'fallenwood-docker'
       repository: 'fallenwood/xiangyao'
       ${{ if eq(parameters.pipelineType, 'Official') }}:
         displayName: 'Docker Build And Push'
