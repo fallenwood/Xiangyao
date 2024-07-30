@@ -186,7 +186,7 @@ internal sealed class DockerProxyConfigProvider : IProxyConfigProvider, IUpdateC
 
       var addresses = newConfig.ProxyConfig.Routes.SelectMany(e => e.Match.Hosts ?? []).Distinct().ToArray();
 
-      this.lettuceEncryptOptionsProvider.SetAddresses(addresses);
+      this.lettuceEncryptOptionsProvider.SetDomainNames(addresses);
 
       if (logger.IsEnabled(LogLevel.Debug)) {
         logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
