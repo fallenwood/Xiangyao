@@ -10,8 +10,4 @@
     <File Path="Directory.Packages.props" />
     <File Path="Dockerfile" />
   </Folder>
-  <Folder Name="/contrib/">
-    <Project Path="contrib\LettuceEncrypt\src\Kestrel.Certificates\McMaster.AspNetCore.Kestrel.Certificates.csproj" />
-    <Project Path="contrib\LettuceEncrypt\src\LettuceEncrypt\LettuceEncrypt.csproj" />
-  </Folder>
 </Solution>
