@@ -34,6 +34,8 @@ internal sealed class CustomHandler(
     var useLetsEncrypt = context.ParseResult.GetValueForOption(bindings.useLetsEncrypt);
     var letsEncryptDomainNames = context.ParseResult.GetValueForOption(bindings.letsEncryptDomainNames);
     var letsEncryptEmailAddress = context.ParseResult.GetValueForOption(bindings.letsEncryptEmailAddress);
+    var certificate = context.ParseResult.GetValueForOption(bindings.certificate);
+    var certificateKey = context.ParseResult.GetValueForOption(bindings.certificateKey);
     var useOtel = context.ParseResult.GetValueForOption(bindings.useOtel);
     var otelLogEndpoint = context.ParseResult.GetValueForOption(bindings.otelLogEndpoint);
     var otelTraceEndpoint = context.ParseResult.GetValueForOption(bindings.otelTraceEndpoint);
@@ -46,8 +48,8 @@ internal sealed class CustomHandler(
       UseLetsEncrypt: useLetsEncrypt,
       LetsEncryptDomainNames: letsEncryptDomainNames!.ToArray(),
       LetsEncryptEmailAddress: letsEncryptEmailAddress ?? string.Empty,
-      Certificate: string.Empty,
-      CertificateKey: string.Empty,
+      Certificate: certificate ?? string.Empty,
+      CertificateKey: certificateKey ?? string.Empty,
       UseOtel: useOtel,
       OtelLogEndpoint: otelLogEndpoint ?? string.Empty,
       OtelTraceEndpoint: otelTraceEndpoint ?? string.Empty,
