@@ -14,8 +14,9 @@ internal interface ILabelParser {
   }
 
   public bool ParseEnabled(List<KeyValuePair<string, string>> labels) {
-    var enabled = labels.FirstOrDefault(e =>
-      string.Equals(e.Key, XiangyaoConstants.EnableLabelKey, StringComparison.OrdinalIgnoreCase))
+    var enabled = labels
+      .FirstOrDefault(e =>
+        string.Equals(e.Key, XiangyaoConstants.EnableLabelKey, StringComparison.OrdinalIgnoreCase))
       .Value;
 
     if (string.IsNullOrEmpty(enabled)
@@ -27,15 +28,15 @@ internal interface ILabelParser {
   }
 
   public string ParseHost(ContainerListResponse container) {
-    var fisrtNetwork = container.NetworkSettings.Networks.Values.First();
+    var fisrtNetwork = container.NetworkSettings?.Networks?.Values.First();
 
-    var host = fisrtNetwork.Aliases?.FirstOrDefault();
+    var host = fisrtNetwork?.Aliases?.FirstOrDefault();
 
     if (string.IsNullOrEmpty(host)) {
-      host = fisrtNetwork.IPAddress;
+      host = fisrtNetwork?.IPAddress;
     }
 
-    return host;
+    return host ?? string.Empty;
   }
 
   public string ParseSchema(List<KeyValuePair<string, string>> labels) {
