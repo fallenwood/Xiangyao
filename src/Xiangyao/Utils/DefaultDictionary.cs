@@ -25,4 +25,8 @@ public class DefaultDictionary<TKey, TValue>(int capacity = 0)
   }
 
   public IReadOnlyDictionary<TKey, TValue> ToDictionary() => dictionary;
+
+  public int Count => this.dictionary.Count;
+
+  public long LongCount => this.dictionary.LongCount();
 }
