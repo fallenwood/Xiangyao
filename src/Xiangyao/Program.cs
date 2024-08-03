@@ -151,12 +151,20 @@ async Task MainAsync(string[] args, Options options) {
 
   app.MapReverseProxy();
 
-  await app.RunAsync();
+  var portal = new Portal();
+  portal.ConfigureServices(app.Services);
+  portal.Configure();
+
+  await Task.WhenAll(app.RunAsync(), portal.RunAsync());
+
+  // await app.RunAsync();
 }
 
 void AddNoopServices(WebApplicationBuilder builder) {
   builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+  
+  builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, FileProxyConfigProvider>();
 }
 
 void AddFileServices(WebApplicationBuilder builder) {
@@ -164,6 +172,8 @@ void AddFileServices(WebApplicationBuilder builder) {
 
   builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+  builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, FileProxyConfigProvider>();
 }
 
 void AddDockerServices(WebApplicationBuilder builder) {
@@ -172,6 +182,7 @@ void AddDockerServices(WebApplicationBuilder builder) {
   builder.Services.AddSingleton<DockerProxyConfigProvider>();
   builder.Services.AddSingleton<IDockerProvider, DockerProvider>();
   builder.Services.AddSingleton<IProxyConfigProvider, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
+  builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
   builder.Services.AddSingleton<IUpdateConfig, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
   builder.Services.AddSingleton<ILabelParser, SwitchCaseLabelParser>();
   builder.Services.AddSingleton<IThroutteEngine>(_ => new ThroutteEngine(window: TimeSpan.FromSeconds(2), limit: 1));
