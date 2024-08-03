@@ -18,4 +18,4 @@ See `examples/standalone`
 TODO
 
 ## Performance
-TODO
+See [benchmarks](./benchmarks/README.MD "")
