@@ -149,9 +149,7 @@ async Task MainAsync(string[] args, Options options) {
     app.UseHttpsRedirection();
   }
 
-  app.MapHealthChecks("/healthz");
-
-  // app.MapReverseProxy();
+  app.MapReverseProxy();
 
   await app.RunAsync();
 }
@@ -159,8 +157,6 @@ async Task MainAsync(string[] args, Options options) {
 void AddNoopServices(WebApplicationBuilder builder) {
   builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
-
-  builder.Services.AddHealthChecks();
 }
 
 void AddFileServices(WebApplicationBuilder builder) {

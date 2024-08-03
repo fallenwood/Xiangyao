@@ -2,8 +2,9 @@
   "profiles": {
     "http": {
       "commandName": "Project",
+      "commandLineArgs": "",
       // "commandLineArgs": "--https",
-      "commandLineArgs": "--https --provider None --certificate=../../certs/fullchain.pem --certificate-key=../../certs/privkey.pem",
+      // "commandLineArgs": "--https --provider None --certificate=../../certs/fullchain.pem --certificate-key=../../certs/privkey.pem",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

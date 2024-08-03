@@ -7,8 +7,8 @@ internal sealed class OptionBindings {
 
   public readonly Option<Provider> providerOption = new(
     aliases: ["-p", "--provider"],
-    getDefaultValue: () => Provider.Docker,
-    description: "Config Provider (e.g. File, Docker, etc.)");
+    getDefaultValue: () => Provider.None,
+    description: "Config Provider (e.g. None, File, Docker, etc.)");
 
   public readonly Option<bool> useHttps = new Option<bool>(
     aliases: ["--https", "--use-https"],
