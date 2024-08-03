@@ -1,6 +1,7 @@
 namespace Xiangyao;
 
 internal enum Provider : int {
+  None,
   File,
   Docker,
 }

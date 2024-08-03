@@ -7,8 +7,8 @@ internal sealed class OptionBindings {
 
   public readonly Option<Provider> providerOption = new(
     aliases: ["-p", "--provider"],
-    getDefaultValue: () => Provider.Docker,
-    description: "Config Provider (e.g. File, Docker, etc.)");
+    getDefaultValue: () => Provider.None,
+    description: "Config Provider (e.g. None, File, Docker, etc.)");
 
   public readonly Option<bool> useHttps = new Option<bool>(
     aliases: ["--https", "--use-https"],
@@ -54,4 +54,14 @@ internal sealed class OptionBindings {
     aliases: ["--otel-meter", "--otel-meter-endpoint"],
     getDefaultValue: () => DefaultOtelEndpoint,
     description: "Opentelemetry Meter Endpoint");
+
+  public readonly Option<string> certificate = new(
+    aliases: ["--certificate", "--certificate-path"],
+    getDefaultValue: () => string.Empty,
+    description: "The fullchain.pem");
+
+  public readonly Option<string> certificateKey = new(
+    aliases: ["--certificate-key", "--certificate-key-path"],
+    getDefaultValue: () => string.Empty,
+    description: "The privkey.pem");
 }

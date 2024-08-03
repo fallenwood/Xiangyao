@@ -9,6 +9,7 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
 
 using Options = Xiangyao.Options;
+using Xiangyao.Certificate;
 
 const string ServiceName = "XiangyaoProxy";
 
@@ -25,6 +26,8 @@ rootCommand.AddOption(bindings.useOtel);
 rootCommand.AddOption(bindings.otelLogEndpoint);
 rootCommand.AddOption(bindings.otelTraceEndpoint);
 rootCommand.AddOption(bindings.otelMeterEndpoint);
+rootCommand.AddOption(bindings.certificate);
+rootCommand.AddOption(bindings.certificateKey);
 
 rootCommand.Handler = new CustomHandler(
   bindings,
@@ -44,6 +47,9 @@ async Task MainAsync(string[] args, Options options) {
   builder.Services.AddSingleton<ILettuceEncryptOptionsProvider>(provider);
 
   switch (options.Provider) {
+    case Provider.None:
+      AddNoopServices(builder);
+      break;
     case Provider.File:
       AddFileServices(builder);
       break;
@@ -55,6 +61,7 @@ async Task MainAsync(string[] args, Options options) {
   if (options.UseHttps) {
     if (options.UseLetsEncrypt) {
       Console.WriteLine($"Use LetsEncrypt with {options.LetsEncryptEmailAddress} for {string.Join(",", options.LetsEncryptDomainNames)}");
+
       builder
         .Services
         .AddLettuceEncrypt(
@@ -78,7 +85,20 @@ async Task MainAsync(string[] args, Options options) {
       });
     } else {
       Console.WriteLine($"Use existing certificate");
-      // TODO: use exising certificate
+
+      var certificateSelector = new WildcastServerCertificateSelector(
+        options.Certificate,
+        options.CertificateKey);
+
+      builder.WebHost.UseKestrel(kestrel => {
+        kestrel.ConfigureHttpsDefaults(h => {
+          h.UseServerCertificateSelector(certificateSelector);
+        });
+
+        kestrel.ConfigureEndpointDefaults(e => {
+          e.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2AndHttp3;
+        });
+      });
     }
   }
 
@@ -132,6 +152,11 @@ async Task MainAsync(string[] args, Options options) {
   app.MapReverseProxy();
 
   await app.RunAsync();
+}
+
+void AddNoopServices(WebApplicationBuilder builder) {
+  builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 }
 
 void AddFileServices(WebApplicationBuilder builder) {
