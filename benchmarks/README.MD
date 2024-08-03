@@ -30,8 +30,8 @@ Note that Traefik accepts the host header without port, while Xiangyao needs.
 |Load Balancer|Backend|RPS|TPS|
 |-|-|-|-|
 |Xiangyao|Nginx|24341.38|19.24MB|
-|Traefik|Nginx|18453.81|5.23MB|
-|Xiangyao|HelloWorld|33614.84|14.59MB|
+|Traefik|Nginx|18453.81|14.59MB|
+|Xiangyao|HelloWorld|33614.84|5.23MB|
 |Traefik|HelloWorld|20428.28|3.18MB|
 
 ### Details
