@@ -1,23 +1,32 @@
 
-import { onCleanup, createSignal } from "https://esm.sh/solid-js@1.8.1";
+import { onCleanup, createSignal, createMemo } from "https://esm.sh/solid-js@1.8.1";
 import { render } from "https://esm.sh/solid-js@1.8.1/web";
 import html from "https://esm.sh/solid-js@1.8.1/html";
 
-function getConfiguration() {
-    return fetch("/api/configuration")
-    .then(res => res.json());
+async function getConfiguration() {
+  const res = await fetch("/api/configuration");
+  const json = await res.json();
+
+  console.log("json", json);
+  return json;
 }
 
 const App = () => {
-    const [count, setCount] = createSignal(0);
-    const [config, setConfig] = createSignal({});
+  const [config, setConfig] = createSignal({});
 
+  createMemo(() => {
     getConfiguration()
-    .then(c => setConfig(c));
-    
-    return html`<div>${JSON.stringify(config())}</div>`;
-    // or
-    return h("div", {}, count);
+      .then(c => {
+        console.log("setting config", c);
+        console.log(JSON.stringify(c));
+        setConfig(c);
+      });
+  }, []);
+
+
+  return html`<div>${config}</div>`;
+  // or
+  // return h("div", {}, config);
 };
 
 render(App, document.querySelector("#app"));
