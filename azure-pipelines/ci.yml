@@ -1,5 +1,7 @@
 trigger:
-- master
+  branches:
+    include:
+    - main
 
 extends:
   template: template.yml
