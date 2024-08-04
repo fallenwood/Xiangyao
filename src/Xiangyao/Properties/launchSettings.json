@@ -2,9 +2,10 @@
   "profiles": {
     "http": {
       "commandName": "Project",
-      "commandLineArgs": "",
+      // "commandLineArgs": "",
       // "commandLineArgs": "--https",
       // "commandLineArgs": "--https --provider None --certificate=../../certs/fullchain.pem --certificate-key=../../certs/privkey.pem",
+      "commandLineArgs": "--use-otel --otel-trace-endpoint=http://192.168.1.128:4317 --otel-meter-endpoint=http://192.168.1.128:4317 --otel-log-endpoint=http://192.168.1.128:4317",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

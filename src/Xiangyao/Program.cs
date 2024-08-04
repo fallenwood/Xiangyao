@@ -106,13 +106,13 @@ async Task MainAsync(string[] args, Options options) {
     Console.WriteLine($"Enabled Opentelemetry, trace:{options.OtelTraceEndpoint}, logs:{options.OtelLogEndpoint}, meter:{options.OtelMeterEndpoint}");
 
     builder.Logging.AddOpenTelemetry(logging => {
-      logging
+      var b = logging
         .SetResourceBuilder(
           ResourceBuilder.CreateDefault()
             .AddService(ServiceName));
 
       if (!string.IsNullOrEmpty(options.OtelLogEndpoint)) {
-        logging.AddOtlpExporter(exporter => {
+        b.AddOtlpExporter(exporter => {
           exporter.Endpoint = new(options.OtelLogEndpoint);
         });
       }
@@ -121,22 +121,22 @@ async Task MainAsync(string[] args, Options options) {
     builder.Services.AddOpenTelemetry()
       .ConfigureResource(resource => resource.AddService(ServiceName))
       .WithTracing(tracing => {
-        tracing
+        var b = tracing
           .AddAspNetCoreInstrumentation()
           .AddHttpClientInstrumentation()
           .AddSource(ServiceName);
         if (!string.IsNullOrEmpty(options.OtelTraceEndpoint)) {
-          tracing.AddOtlpExporter(exporter => {
+          b.AddOtlpExporter(exporter => {
             exporter.Endpoint = new(options.OtelTraceEndpoint);
           });
         }
       })
       .WithMetrics(metrics => {
-        metrics
+        var b = metrics
           .AddAspNetCoreInstrumentation()
           .AddRuntimeInstrumentation();
         if (!string.IsNullOrEmpty(options.OtelMeterEndpoint)) {
-          metrics.AddOtlpExporter(exporter => {
+          b.AddOtlpExporter(exporter => {
             exporter.Endpoint = new(options.OtelMeterEndpoint);
           });
         }
