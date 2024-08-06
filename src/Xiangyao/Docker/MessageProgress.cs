@@ -12,7 +12,7 @@ public class MessageProgress(IUpdateConfig updateConfig, ILogger logger) : IProg
     if (message.Action == "start"
       || message.Action == "die"
       || message.Action.StartsWith("health_status")) {
-      this.updateConfig.UpdateAsync().AsTask().Wait();
+      _ = updateConfig.UpdateAsync();
     }
   }
 }

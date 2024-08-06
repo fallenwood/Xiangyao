@@ -14,4 +14,7 @@
     <PackageReference Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Xiangyao.Telemetry\Xiangyao.Telemetry.csproj" />
+  </ItemGroup>
 </Project>
