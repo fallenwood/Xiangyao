@@ -13,7 +13,8 @@ internal static partial class OpenTelemetryMeter {
 }
 
 public class OpenTelemetryMeterProvider(IMeterFactory factory, IServiceProvider serviceProvider) {
-  public Meter Meter { get; } = factory.Create("Xiangyao");
+  public const string Name = "XiangyaoProxy";
+  public Meter Meter { get; } = factory.Create(Name);
 
   internal DockerHit DockerHit => serviceProvider.GetRequiredService<DockerHit>();
   internal DockerMiss DockerMiss => serviceProvider.GetRequiredService<DockerMiss>();

@@ -136,12 +136,17 @@ async Task MainAsync(string[] args, Options options) {
       })
       .WithMetrics(metrics => {
         metrics
+          .AddMeter(OpenTelemetryMeterProvider.Name)
           .AddAspNetCoreInstrumentation()
           .AddRuntimeInstrumentation();
         if (!string.IsNullOrEmpty(options.OtelMeterEndpoint)) {
           metrics.AddOtlpExporter(exporter => {
             exporter.Endpoint = new(options.OtelMeterEndpoint);
           });
+        }
+
+        if (builder.Environment.IsDevelopment()) {
+          metrics.AddConsoleExporter();
         }
       });
   }
