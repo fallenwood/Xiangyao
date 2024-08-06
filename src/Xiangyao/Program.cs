@@ -10,6 +10,7 @@ using OpenTelemetry.Metrics;
 
 using Options = Xiangyao.Options;
 using Xiangyao.Certificate;
+using Xiangyao.Telemetry;
 
 const string ServiceName = "XiangyaoProxy";
 
@@ -117,6 +118,8 @@ async Task MainAsync(string[] args, Options options) {
         });
       }
     });
+
+    builder.Services.AddOpenTelemetryMeter();
 
     builder.Services.AddOpenTelemetry()
       .ConfigureResource(resource => resource.AddService(ServiceName))
