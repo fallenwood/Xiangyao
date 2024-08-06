@@ -12,7 +12,7 @@ services:
     container_name: "xiangyao"
 
   traefik:
-    image: "docker.io/traefik:v3.0"
+    image: "docker.io/traefik:v3.1"
     volumes:
     - "/var/run/docker.sock:/var/run/docker.sock"
     container_name: "traefik"
@@ -33,5 +33,19 @@ services:
     - "xiangyao.routes.nginx_backend.match.path={**catch-all}"
     - "traefik.enable=true"
     - "traefik.port=80"
-    - "traefik.http.routers.nginx_backend.rule=Host(`nginx_backend:6000`)"
+    - "traefik.http.routers.nginx_backend.rule=Host(`nginx_backend`)"
     - "traefik.http.routers.nginx_backend.entrypoints=web"
+
+  helloworld:
+    build:
+      context: "./helloworld"
+    labels:
+    - "xiangyao.enable=true"
+    - "xiangyao.cluster.port=5000"
+    - "xiangyao.cluster.schema=http"
+    - "xiangyao.routes.helloworld.match.host=helloworld:5000"
+    - "xiangyao.routes.helloworld.match.path={**catch-all}"
+    - "traefik.enable=true"
+    - "traefik.http.routers.helloworld.rule=Host(`helloworld`)"
+    - "traefik.http.routers.helloworld.entrypoints=web"
+    - "traefik.http.services.helloworld.loadbalancer.server.port=5000"
