@@ -40,6 +40,8 @@ internal sealed class CustomHandler(
     var otelLogEndpoint = context.ParseResult.GetValueForOption(bindings.otelLogEndpoint);
     var otelTraceEndpoint = context.ParseResult.GetValueForOption(bindings.otelTraceEndpoint);
     var otelMeterEndpoint = context.ParseResult.GetValueForOption(bindings.otelMeterEndpoint);
+    var usePortal = context.ParseResult.GetValueForOption(bindings.usePortal);
+    var portalPort = context.ParseResult.GetValueForOption(bindings.portalPort);
 
     var options = new Options(
       Provider: provider,
@@ -53,7 +55,9 @@ internal sealed class CustomHandler(
       UseOtel: useOtel,
       OtelLogEndpoint: otelLogEndpoint ?? string.Empty,
       OtelTraceEndpoint: otelTraceEndpoint ?? string.Empty,
-      OtelMeterEndpoint: otelMeterEndpoint ?? string.Empty);
+      OtelMeterEndpoint: otelMeterEndpoint ?? string.Empty,
+      UsePortal: usePortal,
+      PortalPort: portalPort);
 
     return options;
   }

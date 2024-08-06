@@ -29,6 +29,8 @@ rootCommand.AddOption(bindings.otelTraceEndpoint);
 rootCommand.AddOption(bindings.otelMeterEndpoint);
 rootCommand.AddOption(bindings.certificate);
 rootCommand.AddOption(bindings.certificateKey);
+rootCommand.AddOption(bindings.usePortal);
+rootCommand.AddOption(bindings.portalPort);
 
 rootCommand.Handler = new CustomHandler(
   bindings,
@@ -159,12 +161,23 @@ async Task MainAsync(string[] args, Options options) {
 
   app.MapReverseProxy();
 
-  await app.RunAsync();
+  if (options.UsePortal) {
+    var portal = new Portal(options.PortalPort);
+
+    portal.ConfigureServices(app.Services);
+    portal.Configure();
+
+    await Task.WhenAll(app.RunAsync(), portal.RunAsync());
+  } else {
+    await app.RunAsync();
+  }
 }
 
 void AddNoopServices(WebApplicationBuilder builder) {
   builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+  
+  builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, FileProxyConfigProvider>();
 }
 
 void AddFileServices(WebApplicationBuilder builder) {
@@ -172,6 +185,8 @@ void AddFileServices(WebApplicationBuilder builder) {
 
   builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+  builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, FileProxyConfigProvider>();
 }
 
 void AddDockerServices(WebApplicationBuilder builder) {
@@ -180,6 +195,7 @@ void AddDockerServices(WebApplicationBuilder builder) {
   builder.Services.AddSingleton<DockerProxyConfigProvider>();
   builder.Services.AddSingleton<IDockerProvider, DockerProvider>();
   builder.Services.AddSingleton<IProxyConfigProvider, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
+  builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
   builder.Services.AddSingleton<IUpdateConfig, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
   builder.Services.AddSingleton<ILabelParser, SwitchCaseLabelParser>();
   builder.Services.AddSingleton<IThroutteEngine>(_ => new ThroutteEngine(window: TimeSpan.FromSeconds(2), limit: 1));

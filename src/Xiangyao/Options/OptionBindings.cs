@@ -64,4 +64,14 @@ internal sealed class OptionBindings {
     aliases: ["--certificate-key", "--certificate-key-path"],
     getDefaultValue: () => string.Empty,
     description: "The privkey.pem");
+
+  public readonly Option<bool> usePortal = new(
+    aliases: ["--portal", "--use-portal", "--enable-portal"],
+    getDefaultValue: () => false,
+    description: "Enable portal");
+
+  public readonly Option<int> portalPort = new(
+    aliases: ["--portal-port"],
+    getDefaultValue: () => 8080,
+    description: "Portal port, default 8080");
 }

@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src\Xiangyao\Xiangyao.csproj" />
+    <Project Path="src\Xiangyao.Portal\Xiangyao.Portal.csproj" />
     <Project Path="src\Xiangyao.Telemetry\Xiangyao.Telemetry.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">

@@ -30,7 +30,7 @@ public class ChangeNotifier {
   }
 }
 
-internal sealed class DockerProxyConfigProvider : IProxyConfigProvider, IUpdateConfig {
+internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   private const long Threshold = 60 * 1000;
 
   private readonly IDockerProvider dockerProvider;
@@ -63,6 +63,8 @@ internal sealed class DockerProxyConfigProvider : IProxyConfigProvider, IUpdateC
       [],
       notifier.Source.Token));
   }
+
+  public XiangyaoProxyConfig Config => config;
 
   public async Task<XiangyaoProxyConfig> GetXiangyaoProxyConfig() {
     logger.LogDebug(nameof(GetXiangyaoProxyConfig));
