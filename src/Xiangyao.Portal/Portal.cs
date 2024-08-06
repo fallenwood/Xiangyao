@@ -12,7 +12,7 @@ public class Portal {
   public WebApplicationBuilder Builder { get; private set; } = default!;
   public WebApplication App { get; private set; } = default!;
 
-  public Portal(int port = 8080) {
+  public Portal(int port) {
     var builder = WebApplication.CreateSlimBuilder([]);
     this.Builder = builder;
 
@@ -34,9 +34,11 @@ public class Portal {
 
     var location = Assembly.GetExecutingAssembly().GetManifestResourceNames().Where(rnn => rnn.Contains("wwwroot"));
 
-    app.UseStaticFiles(new StaticFileOptions {
-      FileProvider = new ManifestEmbeddedFileProvider(typeof(Portal).Assembly, "wwwroot")
-    });
+    StaticFileOptions staticFileOptions = new () {
+      FileProvider = new ManifestEmbeddedFileProvider(typeof(Portal).Assembly, "wwwroot"),
+    };
+    
+    app.MapFallbackToFile("index.html", staticFileOptions);
 
     var api = app.MapGroup("/api");
     api.MapGet("configuration", ([FromKeyedServices(AppKey)] IServiceProvider appServiceProvider) => {
@@ -46,6 +48,8 @@ public class Portal {
 
       return Results.Ok(config);
     });
+
+    app.UseStaticFiles(staticFileOptions);
   }
 
   public Task RunAsync() {

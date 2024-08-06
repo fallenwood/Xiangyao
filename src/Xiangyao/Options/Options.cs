@@ -18,4 +18,6 @@ internal sealed record Options(
   bool UseOtel = false,
   string OtelLogEndpoint = "",
   string OtelTraceEndpoint = "",
-  string OtelMeterEndpoint = "");
+  string OtelMeterEndpoint = "",
+  bool UsePortal = false,
+  int PortalPort = 8080);

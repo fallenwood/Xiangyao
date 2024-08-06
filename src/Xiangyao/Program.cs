@@ -29,6 +29,8 @@ rootCommand.AddOption(bindings.otelTraceEndpoint);
 rootCommand.AddOption(bindings.otelMeterEndpoint);
 rootCommand.AddOption(bindings.certificate);
 rootCommand.AddOption(bindings.certificateKey);
+rootCommand.AddOption(bindings.usePortal);
+rootCommand.AddOption(bindings.portalPort);
 
 rootCommand.Handler = new CustomHandler(
   bindings,
@@ -159,13 +161,16 @@ async Task MainAsync(string[] args, Options options) {
 
   app.MapReverseProxy();
 
-  var portal = new Portal();
-  portal.ConfigureServices(app.Services);
-  portal.Configure();
+  if (options.UsePortal) {
+    var portal = new Portal(options.PortalPort);
 
-  await Task.WhenAll(app.RunAsync(), portal.RunAsync());
+    portal.ConfigureServices(app.Services);
+    portal.Configure();
 
-  // await app.RunAsync();
+    await Task.WhenAll(app.RunAsync(), portal.RunAsync());
+  } else {
+    await app.RunAsync();
+  }
 }
 
 void AddNoopServices(WebApplicationBuilder builder) {

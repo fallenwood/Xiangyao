@@ -24,7 +24,7 @@ const App = () => {
   }, []);
 
 
-  return html`<div>${config}</div>`;
+  return html`<div>${() => JSON.stringify(config())}</div>`;
   // or
   // return h("div", {}, config);
 };
