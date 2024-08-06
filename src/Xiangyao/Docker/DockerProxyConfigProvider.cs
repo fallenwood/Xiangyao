@@ -3,6 +3,7 @@ namespace Xiangyao;
 using System.Threading;
 using Docker.DotNet.Models;
 using LettuceEncrypt;
+using Xiangyao.Telemetry;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Transforms;
 using YRC = Yarp.ReverseProxy.Configuration;
@@ -38,6 +39,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   private readonly IThroutteEngine throutteEngine;
   private readonly ILettuceEncryptOptionsProvider lettuceEncryptOptionsProvider;
   private readonly ChangeNotifier notifier = new();
+  private readonly OpenTelemetryMeterProvider? meterProvider;
 
   private XiangyaoProxyConfig config;
 
@@ -46,12 +48,14 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
         ILabelParser labelParser,
         IThroutteEngine throutteEngine,
         ILettuceEncryptOptionsProvider lettuceEncryptOptionsProvider,
-        ILogger<DockerProxyConfigProvider> logger) {
+        ILogger<DockerProxyConfigProvider> logger,
+        IServiceProvider serviceProvider) {
     this.dockerProvider = dockerProvider;
     this.logger = logger;
     this.labelParser = labelParser;
     this.throutteEngine = throutteEngine;
     this.lettuceEncryptOptionsProvider = lettuceEncryptOptionsProvider;
+    this.meterProvider = serviceProvider.GetService<OpenTelemetryMeterProvider>();
 
     this.config = new(
       ProxyConfig: new DockerProxyConfig(
@@ -90,8 +94,11 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
       if (!enabled) {
         this.logger.LogInformation("Container {ContainerId} is not enabled", container.ID);
+        this.meterProvider?.RecordDockerMiss();
         continue;
       }
+
+      this.meterProvider?.RecordDockerHit();
 
       var host = this.labelParser.ParseHost(container);
 

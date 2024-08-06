@@ -17,5 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Xiangyao.Portal\Xiangyao.Portal.csproj" />
     <ProjectReference Include="..\Xiangyao.Common\Xiangyao.Common.csproj" />
+    <ProjectReference Include="..\Xiangyao.Telemetry\Xiangyao.Telemetry.csproj" />
   </ItemGroup>
 </Project>

@@ -10,6 +10,7 @@ using OpenTelemetry.Metrics;
 
 using Options = Xiangyao.Options;
 using Xiangyao.Certificate;
+using Xiangyao.Telemetry;
 
 const string ServiceName = "XiangyaoProxy";
 
@@ -118,6 +119,8 @@ async Task MainAsync(string[] args, Options options) {
       }
     });
 
+    builder.Services.AddOpenTelemetryMeter();
+
     builder.Services.AddOpenTelemetry()
       .ConfigureResource(resource => resource.AddService(ServiceName))
       .WithTracing(tracing => {
@@ -133,12 +136,17 @@ async Task MainAsync(string[] args, Options options) {
       })
       .WithMetrics(metrics => {
         metrics
+          .AddMeter(OpenTelemetryMeterProvider.Name)
           .AddAspNetCoreInstrumentation()
           .AddRuntimeInstrumentation();
         if (!string.IsNullOrEmpty(options.OtelMeterEndpoint)) {
           metrics.AddOtlpExporter(exporter => {
             exporter.Endpoint = new(options.OtelMeterEndpoint);
           });
+        }
+
+        if (builder.Environment.IsDevelopment()) {
+          metrics.AddConsoleExporter();
         }
       });
   }

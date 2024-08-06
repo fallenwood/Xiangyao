@@ -1,4 +1,4 @@
-trigger:
+pr:
   branches:
     include:
     - master
@@ -6,4 +6,4 @@ trigger:
 extends:
   template: template.yml
   parameters:
-    pipelineType: 'Official'
+    pipelineType: 'Unofficial'
