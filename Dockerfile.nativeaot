@@ -13,7 +13,7 @@ RUN dotnet restore "src/Xiangyao/Xiangyao.csproj"
 RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
