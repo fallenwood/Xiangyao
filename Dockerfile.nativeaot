@@ -8,7 +8,7 @@ RUN apt-get update -y && apt-get install -y \
 
 WORKDIR "/src"
 COPY . .
-RUN ./make-aot.sh
+RUN sh ./make-aot.sh
 RUN dotnet restore "src/Xiangyao/Xiangyao.csproj"
 RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -c Release -o /app/build
 
