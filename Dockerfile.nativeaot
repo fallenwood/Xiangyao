@@ -4,7 +4,7 @@ EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 RUN apt-get update -y && apt-get install -y \
-    clang zlib-devel
+    clang zlib1g-dev
 
 WORKDIR "/src"
 COPY . .
