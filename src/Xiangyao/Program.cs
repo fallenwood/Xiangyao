@@ -43,7 +43,7 @@ await rootCommand.InvokeAsync(args);
 async Task MainAsync(string[] args, Options options) {
   var provider = new LettuceEncryptOptionsProvider();
 
-  var builder = WebApplication.CreateBuilder(args);
+  var builder = WebApplication.CreateSlimBuilder(args);
 
   builder.Configuration.AddLettuceEncryptOptionsProvider(provider);
 
@@ -176,7 +176,7 @@ async Task MainAsync(string[] args, Options options) {
 void AddNoopServices(WebApplicationBuilder builder) {
   builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
-  
+
   builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, FileProxyConfigProvider>();
 }
 

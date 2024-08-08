@@ -203,7 +203,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     });
 
     if (logger.IsEnabled(LogLevel.Debug)) {
-      logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
+      // logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
     }
   }
 }
