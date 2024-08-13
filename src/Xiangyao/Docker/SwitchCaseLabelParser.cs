@@ -1,8 +1,10 @@
 namespace Xiangyao;
 
+using Xiangyao.Docker;
+
 internal sealed class SwitchCaseLabelParser : ILabelParser {
-  public bool Parse(KeyValuePair<string, string> label, DefaultDictionary<string, RouteConfig> parsedLabels) {
-    var keys = label.Key.Split('.');
+  public bool Parse(Label label, DefaultDictionary<string, RouteConfig> parsedLabels) {
+    var keys = label.Name.Split('.');
 
     if (keys.Length < 3) {
       return false;

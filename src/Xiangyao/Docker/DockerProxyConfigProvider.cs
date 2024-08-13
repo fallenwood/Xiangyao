@@ -69,7 +69,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   public async Task<XiangyaoProxyConfig> GetXiangyaoProxyConfig() {
     logger.LogDebug(nameof(GetXiangyaoProxyConfig));
 
-    var client = this.dockerProvider.CreateDockerClient();
+    var client = this.dockerProvider.DockerClient;
 
     var allContainers = await client.ListContainersAsync();
 
@@ -85,8 +85,8 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     foreach (var container in allContainers) {
       var labels = container
           .Labels
-          .Where(e => e.Key.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))
-          .ToList();
+          .Where(e => e.Name.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))
+          .ToArray();
 
       var enabled = this.labelParser.ParseEnabled(labels);
 
@@ -136,7 +136,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     return new(new DockerProxyConfig(routes, clusters, this.notifier.Source.Token));
   }
 
-  public List<YRC.RouteConfig> ParseRouterConfigs(ListContainerResponse container, List<KeyValuePair<string, string>> labels) {
+  public List<YRC.RouteConfig> ParseRouterConfigs(ListContainerResponse container, Label[] labels) {
     var parsedLabels = this.labelParser.ParseRouteConfigs(labels);
 
     var clusterId = container.Names[0];

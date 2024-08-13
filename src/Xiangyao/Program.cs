@@ -193,6 +193,7 @@ void AddDockerServices(WebApplicationBuilder builder) {
   builder.Services.AddReverseProxy();
 
   builder.Services.AddSingleton<DockerProxyConfigProvider>();
+  builder.Services.AddSingleton<DockerSocket>(_ => new DockerSocket.DockerUnixDomainSocket("/run/docker.sock"));
   builder.Services.AddSingleton<IDockerProvider, DockerProvider>();
   builder.Services.AddSingleton<IProxyConfigProvider, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
   builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());

@@ -28,7 +28,8 @@ internal class DockerMonitorHostedService(
   public async Task StartAsync(CancellationToken cancellationToken) {
     logger.LogInformation("Starting...");
 
-    this.dockerClient = this.dockerProvider.CreateDockerClient();
+    this.dockerClient = this.dockerProvider.DockerClient;
+
     this.backgroundTask = dockerClient.MonitorEventsAsync(
         new ContainerEventsParameters {
         },

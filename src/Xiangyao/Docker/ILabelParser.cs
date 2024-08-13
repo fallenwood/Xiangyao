@@ -3,8 +3,8 @@ namespace Xiangyao;
 using Xiangyao.Docker;
 
 internal interface ILabelParser {
-  public IReadOnlyDictionary<string, RouteConfig> ParseRouteConfigs(List<KeyValuePair<string, string>> labels) {
-    var dict = new DefaultDictionary<string, RouteConfig>(capacity: labels.Count);
+  public IReadOnlyDictionary<string, RouteConfig> ParseRouteConfigs(Label[] labels) {
+    var dict = new DefaultDictionary<string, RouteConfig>(capacity: labels.Length);
 
     foreach (var label in labels) {
       _ = this.Parse(label, dict);
@@ -13,11 +13,11 @@ internal interface ILabelParser {
     return dict.ToDictionary();
   }
 
-  public bool ParseEnabled(List<KeyValuePair<string, string>> labels) {
+  public bool ParseEnabled(Label[] labels) {
     var enabled = labels
       .FirstOrDefault(e =>
-        string.Equals(e.Key, XiangyaoConstants.EnableLabelKey, StringComparison.OrdinalIgnoreCase))
-      .Value;
+        string.Equals(e.Name, XiangyaoConstants.EnableLabelKey, StringComparison.OrdinalIgnoreCase))
+        ?.Value;
 
     if (string.IsNullOrEmpty(enabled)
       || !string.Equals(enabled, bool.TrueString, StringComparison.OrdinalIgnoreCase)) {
@@ -28,21 +28,14 @@ internal interface ILabelParser {
   }
 
   public string ParseHost(ListContainerResponse container) {
-    // TODO
-    return string.Empty;
-    //var fisrtNetwork = container.NetworkSettings?.Networks?.Values.First();
-    //
-    //var host = fisrtNetwork?.Aliases?.FirstOrDefault();
-    //
-    //if (string.IsNullOrEmpty(host)) {
-    //  host = fisrtNetwork?.IPAddress;
-    //}
-    //
-    //return host ?? string.Empty;
+    var fisrtNetwork = container.NetworkSettings?.FirstOrDefault();
+    var host = fisrtNetwork?.IPAddress;
+
+    return host ?? string.Empty;
   }
 
-  public string ParseSchema(List<KeyValuePair<string, string>> labels) {
-    var schema = labels.FirstOrDefault(e => e.Key == XiangyaoConstants.SchemaLabelKey).Value;
+  public string ParseSchema(Label[] labels) {
+    var schema = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.SchemaLabelKey)?.Value;
 
     if (string.IsNullOrEmpty(schema)) {
       schema = XiangyaoConstants.Http;
@@ -51,8 +44,8 @@ internal interface ILabelParser {
     return schema;
   }
 
-  public int ParsePort(List<KeyValuePair<string, string>> labels) {
-    var portString = labels.FirstOrDefault(e => e.Key == XiangyaoConstants.PortLabelKey).Value;
+  public int ParsePort(Label[] labels) {
+    var portString = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.PortLabelKey)?.Value;
     if (string.IsNullOrEmpty(portString) || !int.TryParse(portString, out var port)) {
       return XiangyaoConstants.HttpPort;
     }
@@ -60,5 +53,5 @@ internal interface ILabelParser {
     return port;
   }
 
-  public bool Parse(KeyValuePair<string, string> label, DefaultDictionary<string, RouteConfig> parsedLabels);
+  public bool Parse(Label label, DefaultDictionary<string, RouteConfig> parsedLabels);
 }
