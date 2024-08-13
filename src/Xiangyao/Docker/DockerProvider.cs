@@ -1,11 +1,12 @@
 namespace Xiangyao;
 
-using Docker.DotNet;
+using Xiangyao.Docker;
+
+
 
 internal sealed class DockerProvider : IDockerProvider {
-  public DockerClient CreateDockerClient() {
-    var client = new DockerClientConfiguration()
-        .CreateClient();
+  public IDockerClient CreateDockerClient() {
+    var client = new DockerClient(new HttpClient());
 
     return client;
   }

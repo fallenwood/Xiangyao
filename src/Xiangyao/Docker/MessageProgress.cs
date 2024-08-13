@@ -1,18 +1,20 @@
 namespace Xiangyao;
 
-using Docker.DotNet.Models;
+using Xiangyao.Docker;
 
-public class MessageProgress(IUpdateConfig updateConfig, ILogger logger) : IProgress<Message> {
+public class MessageProgress(IUpdateConfig updateConfig, ILogger logger) : IAsyncProgress<MonitorEvent> {
   private readonly IUpdateConfig updateConfig = updateConfig;
   private readonly ILogger logger = logger;
 
-  public void Report(Message message) {
-    logger.LogDebug("New Message {Id} {Action}", message.ID, message.Action);
+  public ValueTask ReportAsync(MonitorEvent message) {
+    logger.LogDebug("New Message {Id} {Action}", message.Id, message.Action);
 
     if (message.Action == "start"
       || message.Action == "die"
       || message.Action.StartsWith("health_status")) {
-      _ = updateConfig.UpdateAsync();
+      _ =  updateConfig.UpdateAsync();
     }
+
+    return ValueTask.CompletedTask;
   }
 }

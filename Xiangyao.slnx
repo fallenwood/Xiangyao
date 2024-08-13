@@ -1,12 +1,14 @@
 <Solution>
   <Folder Name="/tests/">
-    <Project Path="tests\Xiangyao.Benchmarks\Xiangyao.Benchmarks.csproj" Type="Classic C#" />
-    <Project Path="tests\Xiangyao.UnitTests\Xiangyao.UnitTests.csproj" Type="Classic C#" />
+    <Project Path="tests\Xiangyao.Benchmarks\Xiangyao.Benchmarks.csproj" />
+    <Project Path="tests\Xiangyao.UnitTests\Xiangyao.UnitTests.csproj" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src\Xiangyao\Xiangyao.csproj" />
     <Project Path="src\Xiangyao.Portal\Xiangyao.Portal.csproj" />
     <Project Path="src\Xiangyao.Telemetry\Xiangyao.Telemetry.csproj" />
+    <Project Path="src\Xiangyao.Common\Xiangyao.Common.csproj" />
+    <Project Path="src\Xiangyao\Xiangyao.csproj" />
+    <Project Path="Xiangyao.DockerClient\Xiangyao.DockerClient.csproj" Type="Classic C#" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".dockerignore" />

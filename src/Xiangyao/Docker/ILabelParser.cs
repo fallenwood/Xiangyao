@@ -1,6 +1,6 @@
 namespace Xiangyao;
 
-using Docker.DotNet.Models;
+using Xiangyao.Docker;
 
 internal interface ILabelParser {
   public IReadOnlyDictionary<string, RouteConfig> ParseRouteConfigs(List<KeyValuePair<string, string>> labels) {
@@ -27,16 +27,18 @@ internal interface ILabelParser {
     return true;
   }
 
-  public string ParseHost(ContainerListResponse container) {
-    var fisrtNetwork = container.NetworkSettings?.Networks?.Values.First();
-
-    var host = fisrtNetwork?.Aliases?.FirstOrDefault();
-
-    if (string.IsNullOrEmpty(host)) {
-      host = fisrtNetwork?.IPAddress;
-    }
-
-    return host ?? string.Empty;
+  public string ParseHost(ListContainerResponse container) {
+    // TODO
+    return string.Empty;
+    //var fisrtNetwork = container.NetworkSettings?.Networks?.Values.First();
+    //
+    //var host = fisrtNetwork?.Aliases?.FirstOrDefault();
+    //
+    //if (string.IsNullOrEmpty(host)) {
+    //  host = fisrtNetwork?.IPAddress;
+    //}
+    //
+    //return host ?? string.Empty;
   }
 
   public string ParseSchema(List<KeyValuePair<string, string>> labels) {

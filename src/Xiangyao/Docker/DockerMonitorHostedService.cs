@@ -1,7 +1,6 @@
 namespace Xiangyao;
 
-using Docker.DotNet;
-using Docker.DotNet.Models;
+using Xiangyao.Docker;
 
 internal class DockerMonitorHostedService(
     IDockerProvider dockerProvider,
@@ -30,7 +29,7 @@ internal class DockerMonitorHostedService(
     logger.LogInformation("Starting...");
 
     this.dockerClient = this.dockerProvider.CreateDockerClient();
-    this.backgroundTask = dockerClient.System.MonitorEventsAsync(
+    this.backgroundTask = dockerClient.MonitorEventsAsync(
         new ContainerEventsParameters {
         },
         new MessageProgress(updateConfig, loggerFactory.CreateLogger<MessageProgress>()),

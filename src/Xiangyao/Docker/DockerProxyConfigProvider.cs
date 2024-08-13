@@ -1,8 +1,8 @@
 namespace Xiangyao;
 
 using System.Threading;
-using Docker.DotNet.Models;
 using LettuceEncrypt;
+using Xiangyao.Docker;
 using Xiangyao.Telemetry;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Transforms;
@@ -71,18 +71,16 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
     var client = this.dockerProvider.CreateDockerClient();
 
-    var allContainers = await client.Containers.ListContainersAsync(new() {
-      All = true,
-    });
+    var allContainers = await client.ListContainersAsync();
 
     if (logger.IsEnabled(LogLevel.Debug)) {
       foreach (var c in allContainers) {
-        logger.LogDebug("Container {Id} {Name} {Status}", c.ID, c.Names.FirstOrDefault(), c.Status);
+        logger.LogDebug("Container {Id} {Name} {Status}", c.Id, c.Names.FirstOrDefault(), c.Status);
       }
     }
 
-    var routes = new List<YRC.RouteConfig>(allContainers.Count);
-    var clusters = new List<YRC.ClusterConfig>(allContainers.Count);
+    var routes = new List<YRC.RouteConfig>(allContainers.Length);
+    var clusters = new List<YRC.ClusterConfig>(allContainers.Length);
 
     foreach (var container in allContainers) {
       var labels = container
@@ -93,7 +91,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
       var enabled = this.labelParser.ParseEnabled(labels);
 
       if (!enabled) {
-        this.logger.LogInformation("Container {ContainerId} is not enabled", container.ID);
+        this.logger.LogInformation("Container {ContainerId} is not enabled", container.Id);
         this.meterProvider?.RecordDockerMiss();
         continue;
       }
@@ -138,7 +136,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     return new(new DockerProxyConfig(routes, clusters, this.notifier.Source.Token));
   }
 
-  public List<YRC.RouteConfig> ParseRouterConfigs(ContainerListResponse container, List<KeyValuePair<string, string>> labels) {
+  public List<YRC.RouteConfig> ParseRouterConfigs(ListContainerResponse container, List<KeyValuePair<string, string>> labels) {
     var parsedLabels = this.labelParser.ParseRouteConfigs(labels);
 
     var clusterId = container.Names[0];

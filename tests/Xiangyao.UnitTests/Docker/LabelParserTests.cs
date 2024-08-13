@@ -1,4 +1,4 @@
-using Docker.DotNet.Models;
+using Xiangyao.Docker;
 
 namespace Xiangyao.UnitTests.Docker;
 
@@ -11,22 +11,22 @@ public class LabelParserTests {
     new ("xiangyao.routes.nginx_http.match.path", "{**catch-all}"),
   ];
 
-  private readonly ContainerListResponse emptyContainerListResponse = new() {
+  private readonly ListContainerResponse emptyContainerListResponse = new() {
   };
 
-  private readonly ContainerListResponse containerListResponse = new() {
-    NetworkSettings = new SummaryNetworkSettings {
-      Networks = new Dictionary<string, EndpointSettings> {
-        {
-          "bridge",
-          new EndpointSettings {
-            Aliases = new List<string> {
-              "nginx"
-            }
-          }
-        }
-      }
-    }
+  private readonly ListContainerResponse containerListResponse = new() {
+    // NetworkSettings = new SummaryNetworkSettings {
+    //   Networks = new Dictionary<string, EndpointSettings> {
+    //     {
+    //       "bridge",
+    //       new EndpointSettings {
+    //         Aliases = new List<string> {
+    //           "nginx"
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
   };
 
   [Theory]

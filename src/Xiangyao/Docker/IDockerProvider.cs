@@ -1,7 +1,7 @@
 namespace Xiangyao;
 
-using Docker.DotNet;
+using Xiangyao.Docker;
 
 public interface IDockerProvider {
-  public DockerClient CreateDockerClient();
+  public IDockerClient CreateDockerClient();
 }
