@@ -1,6 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="Docker.DotNet" />
     <PackageReference Include="Yarp.ReverseProxy" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Xiangyao.Portal": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:59294;http://localhost:59295"
+    }
+  }
+}

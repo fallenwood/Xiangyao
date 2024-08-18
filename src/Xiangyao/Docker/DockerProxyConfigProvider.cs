@@ -1,8 +1,8 @@
 namespace Xiangyao;
 
 using System.Threading;
-using Docker.DotNet.Models;
 using LettuceEncrypt;
+using Xiangyao.Docker;
 using Xiangyao.Telemetry;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Transforms;
@@ -69,31 +69,29 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   public async Task<XiangyaoProxyConfig> GetXiangyaoProxyConfig() {
     logger.LogDebug(nameof(GetXiangyaoProxyConfig));
 
-    var client = this.dockerProvider.CreateDockerClient();
+    var client = this.dockerProvider.DockerClient;
 
-    var allContainers = await client.Containers.ListContainersAsync(new() {
-      All = true,
-    });
+    var allContainers = await client.ListContainersAsync();
 
     if (logger.IsEnabled(LogLevel.Debug)) {
       foreach (var c in allContainers) {
-        logger.LogDebug("Container {Id} {Name} {Status}", c.ID, c.Names.FirstOrDefault(), c.Status);
+        logger.LogDebug("Container {Id} {Name} {Status}", c.Id, c.Names.FirstOrDefault(), c.Status);
       }
     }
 
-    var routes = new List<YRC.RouteConfig>(allContainers.Count);
-    var clusters = new List<YRC.ClusterConfig>(allContainers.Count);
+    var routes = new List<YRC.RouteConfig>(allContainers.Length);
+    var clusters = new List<YRC.ClusterConfig>(allContainers.Length);
 
     foreach (var container in allContainers) {
       var labels = container
           .Labels
-          .Where(e => e.Key.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))
-          .ToList();
+          .Where(e => e.Name.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))
+          .ToArray();
 
       var enabled = this.labelParser.ParseEnabled(labels);
 
       if (!enabled) {
-        this.logger.LogInformation("Container {ContainerId} is not enabled", container.ID);
+        this.logger.LogInformation("Container {ContainerId} is not enabled", container.Id);
         this.meterProvider?.RecordDockerMiss();
         continue;
       }
@@ -138,7 +136,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     return new(new DockerProxyConfig(routes, clusters, this.notifier.Source.Token));
   }
 
-  public List<YRC.RouteConfig> ParseRouterConfigs(ContainerListResponse container, List<KeyValuePair<string, string>> labels) {
+  public List<YRC.RouteConfig> ParseRouterConfigs(ListContainerResponse container, Label[] labels) {
     var parsedLabels = this.labelParser.ParseRouteConfigs(labels);
 
     var clusterId = container.Names[0];
@@ -203,7 +201,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     });
 
     if (logger.IsEnabled(LogLevel.Debug)) {
-      logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
+      // logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
     }
   }
 }

@@ -1,22 +1,22 @@
 namespace Xiangyao.Benchmarks;
 
-using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
+using Xiangyao.Docker;
 
 public class LabelParserBenchmarks {
   private ILabelParser switchCaseLabelParser = new SwitchCaseLabelParser();
   private ILabelParser stateMachineLabelParser = new StateMachineLabelParser();
 
-  private readonly List<KeyValuePair<string, string>> labels = [
-    new ("xiangyao.enable", "true"),
-    new ("xiangyao.cluster.port", "80"),
-    new ("xiangyao.cluster.schema", "http"),
-    new ("xiangyao.routes.nginx_http.match.host", "localhost:5000"),
-    new ("xiangyao.routes.nginx_http.match.path", "{**catch-all}"),
+  private readonly Label[] labels = [
+    new Label { Name = "xiangyao.enable",  Value = "true" },
+    new Label{ Name = "xiangyao.cluster.port", Value =  "80" },
+    new Label{ Name = "xiangyao.cluster.schema",  Value = "http" },
+    new Label{ Name = "xiangyao.routes.nginx_http.match.host", Value =  "localhost:5000" },
+    new Label{ Name = "xiangyao.routes.nginx_http.match.path", Value =  "{**catch-all}" },
   ];
 
   private void Benchmark(ILabelParser labelParser) {
-    var dict = new DefaultDictionary<string, RouteConfig>(capacity: labels.Count);
+    var dict = new DefaultDictionary<string, RouteConfig>(capacity: labels.Length);
 
     foreach (var label in labels) {
       labelParser.Parse(label, dict);

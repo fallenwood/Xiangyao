@@ -1,8 +1,10 @@
 ﻿namespace Xiangyao;
 
+using Xiangyao.Docker;
+
 internal sealed class StateMachineLabelParser : ILabelParser {
-  public bool Parse(KeyValuePair<string, string> label, DefaultDictionary<string, RouteConfig> parsedLabels) {
-    var stateMachine = new StateMachine(label.Key, label.Value);
+  public bool Parse(Label label, DefaultDictionary<string, RouteConfig> parsedLabels) {
+    var stateMachine = new StateMachine(label.Name, label.Value);
 
     stateMachine.Parse(parsedLabels);
 

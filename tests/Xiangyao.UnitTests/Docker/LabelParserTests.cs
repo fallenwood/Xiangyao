@@ -1,32 +1,27 @@
-using Docker.DotNet.Models;
+using Xiangyao.Docker;
 
 namespace Xiangyao.UnitTests.Docker;
 
 public class LabelParserTests {
-  private readonly List<KeyValuePair<string, string>> labels = [
-    new ("xiangyao.enable", "true"),
-    new ("xiangyao.cluster.port", "80"),
-    new ("xiangyao.cluster.schema", "http"),
-    new ("xiangyao.routes.nginx_http.match.host", "localhost:5000"),
-    new ("xiangyao.routes.nginx_http.match.path", "{**catch-all}"),
+  private readonly Label[] labels = [
+    new Label { Name = "xiangyao.enable",  Value = "true" },
+    new Label{ Name = "xiangyao.cluster.port", Value =  "80" },
+    new Label{ Name = "xiangyao.cluster.schema",  Value = "http" },
+    new Label{ Name = "xiangyao.routes.nginx_http.match.host", Value =  "localhost:5000" },
+    new Label{ Name = "xiangyao.routes.nginx_http.match.path", Value =  "{**catch-all}" },
   ];
 
-  private readonly ContainerListResponse emptyContainerListResponse = new() {
+  private readonly ListContainerResponse emptyContainerListResponse = new() {
   };
 
-  private readonly ContainerListResponse containerListResponse = new() {
-    NetworkSettings = new SummaryNetworkSettings {
-      Networks = new Dictionary<string, EndpointSettings> {
-        {
-          "bridge",
-          new EndpointSettings {
-            Aliases = new List<string> {
-              "nginx"
-            }
-          }
-        }
+  private readonly ListContainerResponse containerListResponse = new() {
+    NetworkSettings = [
+      new NetworkEntry {
+        Name = "nginx",
+        IPAddress = "192.168.1.1",
+        GlobalIPv6Address = "",
       }
-    }
+    ],
   };
 
   [Theory]
@@ -35,7 +30,7 @@ public class LabelParserTests {
   public void Test_Parse_1_Label(Type parserType) {
     var parser = Activator.CreateInstance(parserType) as ILabelParser;
 
-    var dict = new DefaultDictionary<string, RouteConfig>(capacity: labels.Count);
+    var dict = new DefaultDictionary<string, RouteConfig>(capacity: labels.Length);
 
     foreach (var label in labels) {
       parser!.Parse(label, dict);
@@ -60,11 +55,11 @@ public class LabelParserTests {
 
     parser.ParseHost(emptyContainerListResponse).Should().BeNullOrEmpty();
 
-    parser.ParseHost(containerListResponse).Should().Be("nginx");
+    parser.ParseHost(containerListResponse).Should().Be("192.168.1.1");
   }
 
   internal class NoopLabelParser : ILabelParser {
-    public bool Parse(KeyValuePair<string, string> label, DefaultDictionary<string, RouteConfig> parsedLabels) {
+    public bool Parse(Label label, DefaultDictionary<string, RouteConfig> parsedLabels) {
       return false;
     }
   }
