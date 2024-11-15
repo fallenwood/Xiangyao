@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 RUN apt-get update -y && apt-get install -y \
     clang zlib1g-dev
 
@@ -10,10 +10,10 @@ WORKDIR "/src"
 COPY . .
 RUN sh ./make-aot.sh
 RUN dotnet restore "src/Xiangyao/Xiangyao.csproj"
-RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -c Release -o /app/build
+RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -r net9.0 -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -c Release -o /app/publish
+RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -r net9.0 -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
