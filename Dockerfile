@@ -6,10 +6,10 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR "/src"
 COPY . .
 RUN dotnet restore "src/Xiangyao/Xiangyao.csproj"
-RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -r net9.0 -c Release -o /app/build
+RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -f net9.0 -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -r net9.0 -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -f net9.0 -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
