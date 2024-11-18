@@ -1,15 +1,15 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-bookworm-slim AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR "/src"
 COPY . .
 RUN dotnet restore "src/Xiangyao/Xiangyao.csproj"
-RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -c Release -o /app/build
+RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -f net9.0 -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -f net9.0 -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
