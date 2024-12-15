@@ -8,66 +8,45 @@ using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Transforms;
 using YRC = Yarp.ReverseProxy.Configuration;
 
-public class ChangeNotifier {
-  private CancellationTokenSource source = new();
-
-  public CancellationTokenSource Source => this.source;
-
-  public void Notify(Action action) {
-    var source = Interlocked.Exchange(ref this.source, new CancellationTokenSource());
-
-    action();
-
-    source.Cancel();
-  }
-
-  public async Task NotifyAsync(Func<Task> action) {
-    var source = Interlocked.Exchange(ref this.source, new CancellationTokenSource());
-
-    await action();
-
-    source.Cancel();
-  }
-}
-
 internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   private const long Threshold = 60 * 1000;
 
   private readonly IDockerProvider dockerProvider;
   private readonly ILogger<DockerProxyConfigProvider> logger;
   private readonly ILabelParser labelParser;
-  private readonly IThroutteEngine throutteEngine;
   private readonly ILettuceEncryptOptionsProvider lettuceEncryptOptionsProvider;
-  private readonly ChangeNotifier notifier = new();
   private readonly OpenTelemetryMeterProvider? meterProvider;
+
+  private CancellationTokenSource source = new();
 
   private XiangyaoProxyConfig config;
 
   public DockerProxyConfigProvider(
         IDockerProvider dockerProvider,
         ILabelParser labelParser,
-        IThroutteEngine throutteEngine,
         ILettuceEncryptOptionsProvider lettuceEncryptOptionsProvider,
         ILogger<DockerProxyConfigProvider> logger,
         IServiceProvider serviceProvider) {
     this.dockerProvider = dockerProvider;
     this.logger = logger;
     this.labelParser = labelParser;
-    this.throutteEngine = throutteEngine;
     this.lettuceEncryptOptionsProvider = lettuceEncryptOptionsProvider;
     this.meterProvider = serviceProvider.GetService<OpenTelemetryMeterProvider>();
+    this.Notifier = new ChangeNotifier(this.UpdateImplAsync);
 
     this.config = new(
       ProxyConfig: new DockerProxyConfig(
       [],
       [],
-      notifier.Source.Token));
+      this.Notifier.Source.Token));
   }
 
   public XiangyaoProxyConfig Config => config;
 
-  public async Task<XiangyaoProxyConfig> GetXiangyaoProxyConfig() {
-    logger.LogDebug(nameof(GetXiangyaoProxyConfig));
+  public IChangeNotifier Notifier { get; private set; }
+
+  public async Task<XiangyaoProxyConfig> GetXiangyaoProxyConfigAsync() {
+    logger.LogDebug(nameof(GetXiangyaoProxyConfigAsync));
 
     var client = this.dockerProvider.DockerClient;
 
@@ -133,7 +112,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
       }
     }
 
-    return new(new DockerProxyConfig(routes, clusters, this.notifier.Source.Token));
+    return new(new DockerProxyConfig(routes, clusters, this.source.Token));
   }
 
   public List<YRC.RouteConfig> ParseRouterConfigs(ListContainerResponse container, Label[] labels) {
@@ -164,6 +143,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   public IProxyConfig GetConfig() {
     logger.LogDebug(nameof(GetConfig));
 
+    this.config = this.GetXiangyaoProxyConfigAsync().Result;
     var config = this.config.ProxyConfig;
 
     logger.LogInformation("Current Config: {Routes} Routes, {Clusters} Clusters", config.Routes.Count, config.Clusters.Count);
@@ -171,37 +151,32 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     return config;
   }
 
-  public async ValueTask UpdateAsync() {
-    logger.LogDebug(nameof(UpdateAsync));
+  private async ValueTask UpdateImplAsync() {
+    var newConfig = await this.GetXiangyaoProxyConfigAsync();
 
-    var now = DateTimeOffset.UtcNow;
+    Interlocked.Exchange(ref this.config, newConfig);
 
-    var throttled = await this.throutteEngine.ThrottleAsync();
+    var addresses = newConfig.ProxyConfig.Routes.SelectMany(e => e.Match.Hosts ?? []).Distinct().ToArray();
 
-    if (this.logger.IsEnabled(LogLevel.Debug)) {
-      this.logger.LogDebug("Throttled {Now}? {throttled}", now, throttled);
-    }
-
-    if (throttled) {
-      return;
-    }
-
-    await this.notifier.NotifyAsync(async () => {
-      var newConfig = await this.GetXiangyaoProxyConfig();
-
-      Interlocked.Exchange(ref this.config, newConfig);
-
-      var addresses = newConfig.ProxyConfig.Routes.SelectMany(e => e.Match.Hosts ?? []).Distinct().ToArray();
-
+    if (addresses.Length > 0) {
       this.lettuceEncryptOptionsProvider.SetDomainNames(addresses);
 
       if (logger.IsEnabled(LogLevel.Debug)) {
         logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
+        logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
       }
-    });
-
-    if (logger.IsEnabled(LogLevel.Debug)) {
-      // logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
+    } else {
+      logger.LogInformation("No addresses found in new configuration");
     }
+
+    var source = Interlocked.Exchange(ref this.source, new CancellationTokenSource());
+
+    source.Cancel();
+  }
+
+  public void Update() {
+    logger.LogDebug(nameof(Update));
+
+    this.Notifier.Notify();
   }
 }

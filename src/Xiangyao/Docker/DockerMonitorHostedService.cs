@@ -4,10 +4,14 @@ using Xiangyao.Docker;
 
 internal class DockerMonitorHostedService(
     IDockerProvider dockerProvider,
-    IUpdateConfig updateConfig,
+    IXiangyaoProxyConfigProvider proxyConfigProvider,
     ILogger<DockerMonitorHostedService> logger,
     ILoggerFactory loggerFactory)
-    : IHostedService {
+    : BackgroundService {
+  private const int MaxStep = 120;
+  private static readonly TimeSpan Interval = TimeSpan.FromSeconds(60);
+
+  private int step = 1;
 
   private readonly Dictionary<string, IDictionary<string, bool>> Filter = new(1) {
     {
@@ -18,30 +22,63 @@ internal class DockerMonitorHostedService(
     },
   };
 
-  private readonly IDockerProvider dockerProvider = dockerProvider;
-  private readonly IUpdateConfig updateConfig = updateConfig;
-  private readonly ILogger<DockerMonitorHostedService> logger = logger;
   private IDockerClient dockerClient = default!;
 
   private Task backgroundTask = default!;
 
-  public async Task StartAsync(CancellationToken cancellationToken) {
+  public override async Task StartAsync(CancellationToken cancellationToken) {
     logger.LogInformation("Starting...");
 
-    this.dockerClient = this.dockerProvider.DockerClient;
+    this.dockerClient = dockerProvider.DockerClient;
 
     this.backgroundTask = dockerClient.MonitorEventsAsync(
         new ContainerEventsParameters {
         },
-        new MessageProgress(updateConfig, loggerFactory.CreateLogger<MessageProgress>()),
+        new MessageProgress(proxyConfigProvider, loggerFactory.CreateLogger<MessageProgress>()),
         cancellationToken: cancellationToken);
 
-    await updateConfig.UpdateAsync();
+    proxyConfigProvider.Update();
+
+    await base.StartAsync(cancellationToken);
   }
 
-  public Task StopAsync(CancellationToken cancellationToken) {
+  public override async Task StopAsync(CancellationToken cancellationToken) {
     logger.LogInformation("Stopping...");
     this.backgroundTask = default!;
-    return Task.CompletedTask;
+    await base.StopAsync(cancellationToken);
+  }
+
+  protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+    while (!stoppingToken.IsCancellationRequested) {
+      var lastCount = proxyConfigProvider.Notifier.ResetCount();
+      var notifierToken = proxyConfigProvider.Notifier.Source.Token;
+
+      var delayTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+
+      try {
+        await proxyConfigProvider.Notifier.HandleAsync();
+      } catch (Exception ex) {
+        logger.LogError(ex, "Error updating configuration");
+      }
+
+      if (lastCount > 0) {
+        step = 1;
+      } else {
+        step = Math.Min(step * 2, MaxStep);
+      }
+
+      var delay = Task.Delay(step * Interval, delayTokenSource.Token);
+      var notify = Task.Delay(Timeout.InfiniteTimeSpan, notifierToken);
+
+      var wakeup = await Task.WhenAny(delay, notify);
+
+      if (wakeup == notify) {
+        logger.LogInformation("Wakeup");
+        step = 1;
+        delayTokenSource.Cancel();
+      } else {
+        logger.LogDebug("Delay");
+      }
+    }
   }
 }

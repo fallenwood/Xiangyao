@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" PrivateAssets="All" />
     <PackageVersion Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
-    <PackageVersion Include="Yarp.ReverseProxy" Version="2.1.0" />
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.2.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
@@ -16,7 +16,7 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="8.7.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
-    <PackageVersion Include="Fallenwood.LettuceEncrypt" Version="1.4.0-alpha0-beta.19" />
+    <PackageVersion Include="Fallenwood.LettuceEncrypt" Version="1.4.0-alpha0-beta.42" />
     <PackageVersion Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" Version="1.0.0" />
     <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="3.1.0" />
 

@@ -16,7 +16,7 @@ public interface IDockerClient {
   public ValueTask<ListContainerResponse[]> ListContainersAsync();
   public Task MonitorEventsAsync(
     ContainerEventsParameters parameters,
-    IAsyncProgress<MonitorEvent> progress,
+    IProgress<MonitorEvent> progress,
     CancellationToken cancellationToken);
 }
 
@@ -47,7 +47,7 @@ public class DockerClient(HttpClient httpClient, string baseUrl = "http://localh
 
   public async Task MonitorEventsAsync(
     ContainerEventsParameters parameters,
-    IAsyncProgress<MonitorEvent> progress,
+    IProgress<MonitorEvent> progress,
     CancellationToken cancellationToken) {
     var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/events?type=container");
     var response = await httpClient.SendAsync(requestMessage, completionOption: HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -65,7 +65,7 @@ public class DockerClient(HttpClient httpClient, string baseUrl = "http://localh
       try {
         var @event = JsonSerializer.Deserialize(line, DockerJsonContext.Default.MonitorEvent);
 
-        await progress.ReportAsync(@event!);
+        progress.Report(@event!);
       }
       catch {
         

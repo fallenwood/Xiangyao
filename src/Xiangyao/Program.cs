@@ -130,6 +130,7 @@ async Task MainAsync(string[] args, Options options) {
           .AddAspNetCoreInstrumentation()
           .AddHttpClientInstrumentation()
           .AddSource(ServiceName);
+
         if (!string.IsNullOrEmpty(options.OtelTraceEndpoint)) {
           tracing.AddOtlpExporter(exporter => {
             exporter.Endpoint = new(options.OtelTraceEndpoint);
@@ -141,6 +142,7 @@ async Task MainAsync(string[] args, Options options) {
           .AddMeter(OpenTelemetryMeterProvider.Name)
           .AddAspNetCoreInstrumentation()
           .AddRuntimeInstrumentation();
+
         if (!string.IsNullOrEmpty(options.OtelMeterEndpoint)) {
           metrics.AddOtlpExporter(exporter => {
             exporter.Endpoint = new(options.OtelMeterEndpoint);
@@ -152,6 +154,8 @@ async Task MainAsync(string[] args, Options options) {
         }
       });
   }
+
+  builder.Services.AddResponseCompression();
 
   var app = builder.Build();
 
@@ -201,7 +205,6 @@ void AddDockerServices(WebApplicationBuilder builder) {
   builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
   builder.Services.AddSingleton<IUpdateConfig, DockerProxyConfigProvider>(sp => sp.GetRequiredService<DockerProxyConfigProvider>());
   builder.Services.AddSingleton<ILabelParser, SwitchCaseLabelParser>();
-  builder.Services.AddSingleton<IThroutteEngine>(_ => new ThroutteEngine(window: TimeSpan.FromSeconds(2), limit: 1));
 
   builder.Services.AddHostedService<DockerMonitorHostedService>();
 }

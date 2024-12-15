@@ -5,6 +5,7 @@ using Xiangyao.Docker;
 
 internal sealed class DockerProvider  : IDockerProvider {
   private readonly Lazy<IDockerClient> lazyDockerClient;
+
   public DockerProvider(DockerSocket dockerSocket) {
     this.lazyDockerClient = new Lazy<IDockerClient>(() => this.CreateDockerClient(dockerSocket));
   }
