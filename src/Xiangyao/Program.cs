@@ -161,6 +161,8 @@ async Task MainAsync(string[] args, Options options) {
 
   app.MapReverseProxy();
 
+  app.UseResponseCompression();
+
   if (options.UsePortal) {
     var portal = new Portal(options.PortalPort);
 
