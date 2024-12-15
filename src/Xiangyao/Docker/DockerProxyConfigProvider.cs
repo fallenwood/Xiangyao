@@ -158,11 +158,15 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
     var addresses = newConfig.ProxyConfig.Routes.SelectMany(e => e.Match.Hosts ?? []).Distinct().ToArray();
 
-    this.lettuceEncryptOptionsProvider.SetDomainNames(addresses);
+    if (addresses.Length > 0) {
+      this.lettuceEncryptOptionsProvider.SetDomainNames(addresses);
 
-    if (logger.IsEnabled(LogLevel.Debug)) {
-      logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
-      logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
+      if (logger.IsEnabled(LogLevel.Debug)) {
+        logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
+        logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
+      }
+    } else {
+      logger.LogInformation("No addresses found in new configuration");
     }
 
     var source = Interlocked.Exchange(ref this.source, new CancellationTokenSource());
