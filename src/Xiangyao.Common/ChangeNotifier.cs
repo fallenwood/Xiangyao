@@ -26,6 +26,7 @@ public class ChangeNotifier(Func<ValueTask> action) : IChangeNotifier {
 
   public CancellationTokenSource Source => this.source;
 
+  public CancellationTokenSource ResetCancellationTokenSource() => Interlocked.Exchange(ref this.source, new CancellationTokenSource());
 
   public void Notify() {
     var source = Interlocked.Exchange(ref this.source, new CancellationTokenSource());

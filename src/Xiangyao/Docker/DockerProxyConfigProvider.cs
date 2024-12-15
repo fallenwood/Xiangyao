@@ -17,6 +17,8 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   private readonly ILettuceEncryptOptionsProvider lettuceEncryptOptionsProvider;
   private readonly OpenTelemetryMeterProvider? meterProvider;
 
+  private CancellationTokenSource source = new();
+
   private XiangyaoProxyConfig config;
 
   public DockerProxyConfigProvider(
@@ -110,7 +112,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
       }
     }
 
-    return new(new DockerProxyConfig(routes, clusters, this.Notifier.Source.Token));
+    return new(new DockerProxyConfig(routes, clusters, this.source.Token));
   }
 
   public List<YRC.RouteConfig> ParseRouterConfigs(ListContainerResponse container, Label[] labels) {
@@ -141,6 +143,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   public IProxyConfig GetConfig() {
     logger.LogDebug(nameof(GetConfig));
 
+    this.config = this.GetXiangyaoProxyConfigAsync().Result;
     var config = this.config.ProxyConfig;
 
     logger.LogInformation("Current Config: {Routes} Routes, {Clusters} Clusters", config.Routes.Count, config.Clusters.Count);
@@ -161,6 +164,10 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
       logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
       logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
     }
+
+    var source = Interlocked.Exchange(ref this.source, new CancellationTokenSource());
+
+    source.Cancel();
   }
 
   public void Update() {

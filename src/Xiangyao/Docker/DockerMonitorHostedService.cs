@@ -51,6 +51,9 @@ internal class DockerMonitorHostedService(
   protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
     while (!stoppingToken.IsCancellationRequested) {
       var lastCount = proxyConfigProvider.Notifier.ResetCount();
+      var notifierToken = proxyConfigProvider.Notifier.Source.Token;
+
+      var delayTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
 
       try {
         await proxyConfigProvider.Notifier.HandleAsync();
@@ -64,7 +67,18 @@ internal class DockerMonitorHostedService(
         step = Math.Min(step * 2, MaxStep);
       }
 
-      await Task.Delay(step * Interval, stoppingToken);
+      var delay = Task.Delay(step * Interval, delayTokenSource.Token);
+      var notify = Task.Delay(Timeout.InfiniteTimeSpan, notifierToken);
+
+      var wakeup = await Task.WhenAny(delay, notify);
+
+      if (wakeup == notify) {
+        logger.LogInformation("Wakeup");
+        step = 1;
+        delayTokenSource.Cancel();
+      } else {
+        logger.LogDebug("Delay");
+      }
     }
   }
 }
