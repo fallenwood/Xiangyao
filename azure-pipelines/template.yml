@@ -1,5 +1,6 @@
 variables:
   tag: "$(Build.BuildNumber)"
+  tagArm: "$(Build.BuildNumber)-arm64"
 
 parameters:
 - name: pipelineType
@@ -46,6 +47,21 @@ jobs:
         latest-distroless
 
 
+  # - task: Docker@2
+  #   inputs:
+  #     containerRegistry: 'docker hub'
+  #     repository: 'fallenwood/xiangyao'
+  #     ${{ if eq(parameters.pipelineType, 'Official') }}:
+  #       displayName: 'Docker Build And Push'
+  #       command: 'buildAndPush'
+  #     ${{ if ne(parameters.pipelineType, 'Official') }}:
+  #       displayName: 'Docker Build'
+  #       command: 'build'
+  #     Dockerfile: '**/Dockerfile.nativeaot'
+  #     tags: |
+  #       $(tag)-nativeaot
+  #       latest-nativeaot
+
   - task: Docker@2
     inputs:
       containerRegistry: 'docker hub'
@@ -56,7 +72,6 @@ jobs:
       ${{ if ne(parameters.pipelineType, 'Official') }}:
         displayName: 'Docker Build'
         command: 'build'
-      Dockerfile: '**/Dockerfile.nativeaot'
+      Dockerfile: '**/Dockerfile.arm64'
       tags: |
-        $(tag)-nativeaot
-        latest-nativeaot
+        $(tagArm)

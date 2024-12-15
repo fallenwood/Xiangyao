@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-bookworm-slim AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-azurelinux3.0-distroless-arm64v8 AS base
 WORKDIR /app
 EXPOSE 80
 
@@ -18,5 +18,7 @@ COPY --from=publish /app/publish .
 ENV ASPNETCORE_URLS=http://+:80
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_gcServer=1
+
+USER root
 
 ENTRYPOINT ["dotnet", "Xiangyao.dll"]
