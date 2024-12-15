@@ -155,6 +155,8 @@ async Task MainAsync(string[] args, Options options) {
       });
   }
 
+  builder.Services.AddResponseCompression();
+
   var app = builder.Build();
 
   if (options.UseHttpsRedirect) {
