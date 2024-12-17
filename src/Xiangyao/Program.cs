@@ -161,6 +161,7 @@ async Task MainAsync(string[] args, Options options) {
     options.EnableForHttps = true;
     options.Providers.Add<ZstdCompressionProvider>();
     options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<DeflateCompressionProvider>();
     options.Providers.Add<GzipCompressionProvider>();
   });
 
