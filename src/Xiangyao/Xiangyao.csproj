@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <PackageReference Include="System.CommandLine" />
@@ -11,6 +11,7 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
     <PackageReference Include="Fallenwood.LettuceEncrypt" />
     <PackageReference Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" />
+    <PackageReference Include="ZstdSharp.Port" />
   </ItemGroup>
 
   <ItemGroup>
