@@ -11,6 +11,8 @@ using OpenTelemetry.Metrics;
 using Options = Xiangyao.Options;
 using Xiangyao.Certificate;
 using Xiangyao.Telemetry;
+using Microsoft.AspNetCore.ResponseCompression;
+using Xiangyao.Utils;
 
 const string ServiceName = "XiangyaoProxy";
 
@@ -155,7 +157,12 @@ async Task MainAsync(string[] args, Options options) {
       });
   }
 
-  builder.Services.AddResponseCompression();
+  builder.Services.AddResponseCompression(options => {
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.Providers.Add<ZstdCompressionProvider>();
+  });
 
   var app = builder.Build();
 
