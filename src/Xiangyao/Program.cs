@@ -159,9 +159,9 @@ async Task MainAsync(string[] args, Options options) {
 
   builder.Services.AddResponseCompression(options => {
     options.EnableForHttps = true;
+    options.Providers.Add<ZstdCompressionProvider>();
     options.Providers.Add<BrotliCompressionProvider>();
     options.Providers.Add<GzipCompressionProvider>();
-    options.Providers.Add<ZstdCompressionProvider>();
   });
 
   var app = builder.Build();
