@@ -189,7 +189,8 @@ async Task MainAsync(string[] args, Options options) {
 
 void AddNoopServices(WebApplicationBuilder builder) {
   builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .ConfigureUnixSocket();
 
   builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, FileProxyConfigProvider>();
 }
@@ -198,13 +199,15 @@ void AddFileServices(WebApplicationBuilder builder) {
   builder.Configuration.AddJsonFile("xiangyao.json", optional: false, reloadOnChange: true);
 
   builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .ConfigureUnixSocket();
 
   builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, FileProxyConfigProvider>();
 }
 
 void AddDockerServices(WebApplicationBuilder builder) {
-  builder.Services.AddReverseProxy();
+  builder.Services.AddReverseProxy()
+    .ConfigureUnixSocket();
 
   builder.Services.AddSingleton<DockerProxyConfigProvider>();
   builder.Services.AddSingleton<DockerSocket>(_ => new DockerSocket.DockerUnixDomainSocket("/run/docker.sock"));

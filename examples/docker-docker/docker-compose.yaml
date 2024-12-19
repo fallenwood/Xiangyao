@@ -4,6 +4,7 @@ services:
       context: "../../"
     volumes:
     - "/var/run/docker.sock:/var/run/docker.sock"
+    - "./xiangyao:/xiangyao"
     environment:
     - "ASPNETCORE_URLS=http://*:5000"
     command:
