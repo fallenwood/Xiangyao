@@ -10,6 +10,7 @@ using YRC = Yarp.ReverseProxy.Configuration;
 
 internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   private const long Threshold = 60 * 1000;
+  public const string UnixSocket = "UnixSocket";
 
   private readonly IDockerProvider dockerProvider;
   private readonly ILogger<DockerProxyConfigProvider> logger;
@@ -114,7 +115,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
         var socketPath = this.labelParser.ParseSocketPath(labels);
 
         var host = this.labelParser.ParseCustomHost(labels) ?? "localhost";
-        var address = $"{schema}://{host}";
+        var address = $"http://{host}";
 
         cluster = new YRC.ClusterConfig {
           ClusterId = container.Names[0],
@@ -127,7 +128,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
             },
           },
           Metadata = new Dictionary<string, string>(1) {
-            { "UnixSocket", socketPath },
+            { UnixSocket, socketPath },
           },
         };
       } else {

@@ -11,14 +11,14 @@ services:
     - "--provider=docker"
     network_mode: "host"
 
-  nginx:
-    image: "docker.io/nginx:alpine"
-    labels:
-    - "xiangyao.enable=true"
-    - "xiangyao.cluster.port=80"
-    - "xiangyao.cluster.schema=http"
-    - "xiangyao.routes.nginx_http.match.host=localhost:5000"
-    - "xiangyao.routes.nginx_http.match.path={**catch-all}"
+  # nginx:
+  #   image: "docker.io/nginx:alpine"
+  #   labels:
+  #   - "xiangyao.enable=true"
+  #   - "xiangyao.cluster.port=80"
+  #   - "xiangyao.cluster.schema=http"
+  #   - "xiangyao.routes.nginx_http.match.host=localhost:5000"
+  #   - "xiangyao.routes.nginx_http.match.path={**catch-all}"
 
   nginx_uds:
     image: "docker.io/nginx:alpine"
@@ -32,5 +32,5 @@ services:
     - "./nginx.confconf:/etc/nginx/templates/nginx.conf"
     - xiangyao:/xiangyao
 
-volume:
+volumes:
   xiangyao:
