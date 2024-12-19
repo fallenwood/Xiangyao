@@ -131,6 +131,10 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
             { UnixSocket, socketPath },
           },
         };
+
+        if (logger.IsEnabled(LogLevel.Debug)) {
+          logger.LogDebug("Adding Unix Socket {SocketPath} for {ClusterId} with {Address}", socketPath, container.Names[0], address);
+        }
       } else {
         logger.LogWarning("Unknown schema {Schema}", schema);
         continue;

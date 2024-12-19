@@ -13,7 +13,6 @@ using Xiangyao.Certificate;
 using Xiangyao.Telemetry;
 using Microsoft.AspNetCore.ResponseCompression;
 using Xiangyao.Utils;
-using System.Net.Sockets;
 
 const string ServiceName = "XiangyaoProxy";
 

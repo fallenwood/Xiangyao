@@ -9,6 +9,7 @@ services:
     - "ASPNETCORE_URLS=http://*:5000"
     command:
     - "--provider=docker"
+    - "--enable-portal"
     network_mode: "host"
 
   # nginx:
@@ -29,7 +30,7 @@ services:
     - "xiangyao.routes.nginx_uds.match.host=localhost:5000"
     - "xiangyao.routes.nginx_uds.match.path={**catch-all}"
     volumes:
-    - "./nginx.confconf:/etc/nginx/templates/nginx.conf"
+    - "./nginx.conf:/etc/nginx/templates/nginx.conf"
     - xiangyao:/xiangyao
 
 volumes:
