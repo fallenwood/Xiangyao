@@ -9,27 +9,13 @@ services:
     - "ASPNETCORE_URLS=http://*:5000"
     command:
     - "--provider=docker"
-    - "--enable-portal"
     network_mode: "host"
 
-  # nginx:
-  #   image: "docker.io/nginx:alpine"
-  #   labels:
-  #   - "xiangyao.enable=true"
-  #   - "xiangyao.cluster.port=80"
-  #   - "xiangyao.cluster.schema=http"
-  #   - "xiangyao.routes.nginx_http.match.host=localhost:5000"
-  #   - "xiangyao.routes.nginx_http.match.path={**catch-all}"
-
-  nginx_uds:
+  nginx:
     image: "docker.io/nginx:alpine"
     labels:
     - "xiangyao.enable=true"
-    - "xiangyao.cluster.schema=unix"
-    - "xiangyao.cluster.socketpath=/xiangyao/nginx.sock"
-    - "xiangyao.routes.nginx_uds.match.host=localhost:5000"
-    - "xiangyao.routes.nginx_uds.match.path={**catch-all}"
-    volumes:
-    - "./nginx.conf:/etc/nginx/conf.d/default.conf"
-    - "./xiangyao:/xiangyao:rw"
-
+    - "xiangyao.cluster.port=80"
+    - "xiangyao.cluster.schema=http"
+    - "xiangyao.routes.nginx_http.match.host=localhost:5000"
+    - "xiangyao.routes.nginx_http.match.path={**catch-all}"
