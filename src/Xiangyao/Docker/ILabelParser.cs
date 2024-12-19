@@ -44,6 +44,11 @@ internal interface ILabelParser {
     return schema;
   }
 
+  public string? ParseCustomHost(Label[] labels) {
+    var host = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.HostLabelKey)?.Value;
+    return host;
+  }
+
   public int ParsePort(Label[] labels) {
     var portString = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.PortLabelKey)?.Value;
     if (string.IsNullOrEmpty(portString) || !int.TryParse(portString, out var port)) {
@@ -51,6 +56,11 @@ internal interface ILabelParser {
     }
 
     return port;
+  }
+
+  public string ParseSocketPath(Label[] labels) {
+    var path = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.UnixSocketPathLabelKey)?.Value;
+    return path ?? string.Empty;
   }
 
   public bool Parse(Label label, DefaultDictionary<string, RouteConfig> parsedLabels);

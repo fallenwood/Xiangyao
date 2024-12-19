@@ -11,6 +11,10 @@ public static class XiangyaoConstants {
 
   public const string PortLabelKey = $"{LabelKeyPrefix}.cluster.port";
 
+  public const string UnixSocketPathLabelKey = $"{LabelKeyPrefix}.cluster.socketpath";
+
+  public const string HostLabelKey = $"{LabelKeyPrefix}.cluster.host";
+
   public const string Http = "http";
 
   public const int HttpPort = 80;

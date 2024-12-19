@@ -13,6 +13,7 @@ using Xiangyao.Certificate;
 using Xiangyao.Telemetry;
 using Microsoft.AspNetCore.ResponseCompression;
 using Xiangyao.Utils;
+using System.Net.Sockets;
 
 const string ServiceName = "XiangyaoProxy";
 
@@ -189,7 +190,27 @@ async Task MainAsync(string[] args, Options options) {
 
 void AddNoopServices(WebApplicationBuilder builder) {
   builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .ConfigureHttpClient(static (context, handler) => {
+      if (context.NewMetadata?.TryGetValue("UnixSocket", out var unixSocket) == true) {
+
+        handler.ConnectCallback = async (context, cancellationToken) => {
+          var socket = new Socket(
+            AddressFamily.Unix,
+            SocketType.Stream,
+            ProtocolType.IP);
+
+          try {
+            await socket.ConnectAsync(new UnixDomainSocketEndPoint(unixSocket));
+
+            return new NetworkStream(socket, ownsSocket: true);
+          } catch (Exception ex) {
+            Console.WriteLine($"Failed to connect to {unixSocket}: {ex.Message}");
+            throw;
+          }
+        };
+      }
+    });
 
   builder.Services.AddSingleton<IXiangyaoProxyConfigProvider, FileProxyConfigProvider>();
 }

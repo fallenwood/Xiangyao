@@ -4,6 +4,7 @@ services:
       context: "../../"
     volumes:
     - "/var/run/docker.sock:/var/run/docker.sock"
+    - xiangyao:/xiangyao
     environment:
     - "ASPNETCORE_URLS=http://*:5000"
     command:
@@ -18,3 +19,18 @@ services:
     - "xiangyao.cluster.schema=http"
     - "xiangyao.routes.nginx_http.match.host=localhost:5000"
     - "xiangyao.routes.nginx_http.match.path={**catch-all}"
+
+  nginx_uds:
+    image: "docker.io/nginx:alpine"
+    labels:
+    - "xiangyao.enable=true"
+    - "xiangyao.cluster.schema=unix"
+    - "xiangyao.cluster.socketpath=/xiangyao/nginx.sock"
+    - "xiangyao.routes.nginx_uds.match.host=localhost:5000"
+    - "xiangyao.routes.nginx_uds.match.path={**catch-all}"
+    volumes:
+    - "./nginx.confconf:/etc/nginx/templates/nginx.conf"
+    - xiangyao:/xiangyao
+
+volume:
+  xiangyao:

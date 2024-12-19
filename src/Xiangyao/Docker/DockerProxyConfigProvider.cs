@@ -63,9 +63,9 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
     foreach (var container in allContainers) {
       var labels = container
-          .Labels
-          .Where(e => e.Name.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))
-          .ToArray();
+        .Labels
+        .Where(e => e.Name.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))
+        .ToArray();
 
       var enabled = this.labelParser.ParseEnabled(labels);
 
@@ -77,32 +77,63 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
       this.meterProvider?.RecordDockerHit();
 
-      var host = this.labelParser.ParseHost(container);
-
-      if (string.IsNullOrEmpty(host)) {
-        this.logger.LogInformation("No valid host found for {Name}", container.Names.FirstOrDefault());
-        continue;
-      }
-
       var containerRoutes = this.ParseRouterConfigs(container, labels);
 
-      var port = this.labelParser.ParsePort(labels);
+      YRC.ClusterConfig cluster;
 
       var schema = this.labelParser.ParseSchema(labels);
 
-      var address = $"{schema}://{host}:{port}";
+      if (schema == "http" || schema == "https") {
+        var customHost = this.labelParser.ParseCustomHost(labels);
+        var host = customHost switch {
+          null or "" => this.labelParser.ParseHost(container),
+          _ => customHost,
+        };
 
-      var cluster = new YRC.ClusterConfig {
-        ClusterId = container.Names[0],
-        Destinations = new Dictionary<string, YRC.DestinationConfig>(1) {
-          {
-            container.Names[0],
-            new () {
-              Address = address,
+        if (string.IsNullOrEmpty(host)) {
+          this.logger.LogInformation("No valid host found for {Name}", container.Names.FirstOrDefault());
+          continue;
+        }
+
+        var port = this.labelParser.ParsePort(labels);
+
+        var address = $"{schema}://{host}:{port}";
+
+        cluster = new YRC.ClusterConfig {
+          ClusterId = container.Names[0],
+          Destinations = new Dictionary<string, YRC.DestinationConfig>(1) {
+            {
+              container.Names[0],
+              new () {
+                Address = address,
+              }
             }
-          }
-        },
-      };
+          },
+        };
+      } else if (schema == "unix") {
+        var socketPath = this.labelParser.ParseSocketPath(labels);
+
+        var host = this.labelParser.ParseCustomHost(labels) ?? "localhost";
+        var address = $"{schema}://{host}";
+
+        cluster = new YRC.ClusterConfig {
+          ClusterId = container.Names[0],
+          Destinations = new Dictionary<string, YRC.DestinationConfig>(1) {
+            {
+              container.Names[0],
+              new () {
+                Address = address,
+              }
+            },
+          },
+          Metadata = new Dictionary<string, string>(1) {
+            { "UnixSocket", socketPath },
+          },
+        };
+      } else {
+        logger.LogWarning("Unknown schema {Schema}", schema);
+        continue;
+      }
 
       clusters.Add(cluster);
 
