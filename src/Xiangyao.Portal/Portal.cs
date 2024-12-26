@@ -1,10 +1,11 @@
-﻿namespace Xiangyao;
+namespace Xiangyao;
 
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Xiangyao.Common;
 
 public class Portal {
   internal const string AppKey = "Xiangyao";
@@ -41,12 +42,11 @@ public class Portal {
     app.MapFallbackToFile("index.html", staticFileOptions);
 
     var api = app.MapGroup("/api");
-    api.MapGet("configuration", ([FromKeyedServices(AppKey)] IServiceProvider appServiceProvider) => {
-      var configProvider = appServiceProvider.GetRequiredService<IXiangyaoProxyConfigProvider>();
 
-      var config = configProvider.Config;
+    api.MapGet("configuration", async (HttpContext context) => {
+      var appServiceProvider = context.RequestServices.GetRequiredKeyedService<IXiangyaoProxyConfigProvider>(AppKey);
 
-      return Results.Ok(config);
+      await context.Response.WriteAsJsonAsync(appServiceProvider.Config, XiangyaoJsonContext.Default.XiangyaoProxyConfig);
     });
 
     app.UseStaticFiles(staticFileOptions);

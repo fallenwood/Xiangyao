@@ -199,7 +199,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
       if (logger.IsEnabled(LogLevel.Debug)) {
         logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
-        logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
+        logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config, Common.XiangyaoJsonContext.Default.XiangyaoProxyConfig));
       }
     } else {
       logger.LogInformation("No addresses found in new configuration");

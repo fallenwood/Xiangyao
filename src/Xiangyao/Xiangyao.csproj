@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.CommandLine" />
@@ -12,6 +15,7 @@
     <PackageReference Include="Fallenwood.LettuceEncrypt" />
     <PackageReference Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" />
     <PackageReference Include="ZstdSharp.Port" />
+    <PackageReference Include="Fallenwood.PublishAotCross" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,34 @@
+FROM mcr.microsoft.com/azurelinux/distroless/base:3.0.20241203-arm64 AS base
+WORKDIR /app
+USER root
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS prep
+RUN apt-get update -yq \
+  && apt-get install curl gnupg unzip xz-utils llvm -yq
+RUN curl https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz -O && \
+  tar xf zig-linux-x86_64-0.13.0.tar.xz && \
+  mv zig-linux-x86_64-0.13.0 /usr/local && \
+  ln -s /usr/local/zig-linux-x86_64-0.13.0/zig /usr/local/bin/zig
+WORKDIR /src
+
+FROM prep AS build
+COPY . .
+RUN dotnet restore "src/Xiangyao/Xiangyao.csproj"
+RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -f net9.0 -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -r linux-arm64 -f net9.0 -c Release -o /app/publish /p:UseAppHost=false /p:PublishAot=true
+RUN rm /app/publish/*.dbg
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+ENV ASPNETCORE_URLS=http://+:80
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_gcServer=1
+
+USER root
+
+ENTRYPOINT ["./Xiangyao"]
