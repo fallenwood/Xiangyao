@@ -8,12 +8,11 @@ RUN apt-get update -y && apt-get install -y \
 
 WORKDIR "/src"
 COPY . .
-RUN sh ./make-aot.sh
 RUN dotnet restore "src/Xiangyao/Xiangyao.csproj"
 RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -f net9.0 -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -f net9.0 -c Release -o /app/publish
+RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -f net9.0 -c Release -o /app/publish /p:PublishAot=true
 
 FROM base AS final
 WORKDIR /app
