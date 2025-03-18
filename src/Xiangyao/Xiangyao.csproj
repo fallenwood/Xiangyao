@@ -11,6 +11,7 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
     <PackageReference Include="Fallenwood.LettuceEncrypt" />
     <PackageReference Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" />
+    <PackageReference Include="BouncyCastle.Cryptography" />
     <PackageReference Include="ZstdSharp.Port" />
   </ItemGroup>
 
