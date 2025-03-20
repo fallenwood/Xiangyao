@@ -1,4 +1,4 @@
-﻿// Copyright (c) Nate McMaster.
+// Copyright (c) Nate McMaster.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Text.Json;
@@ -56,13 +56,8 @@ internal class FileSystemAccountStore : IAccountStore
     private static async Task<AccountModel?> Deserialize(FileInfo jsonFile, CancellationToken cancellationToken)
     {
         using var fileStream = jsonFile.OpenRead();
-        var deserializeOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
 
-        return await JsonSerializer.DeserializeAsync<AccountModel>(fileStream, deserializeOptions,
-            cancellationToken);
+        return await JsonSerializer.DeserializeAsync<AccountModel>(fileStream, LettuceEncryptJsonContext.Default.AccountModel, cancellationToken);
     }
 
     public async Task SaveAccountAsync(AccountModel account, CancellationToken cancellationToken)
@@ -73,11 +68,7 @@ internal class FileSystemAccountStore : IAccountStore
         _logger.LogTrace("Saving account information to {path}", jsonFile.FullName);
 
         using var writeStream = jsonFile.OpenWrite();
-        var serializerOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
-        await JsonSerializer.SerializeAsync(writeStream, account, serializerOptions, cancellationToken);
+        await JsonSerializer.SerializeAsync(writeStream, account, LettuceEncryptJsonContext.Default.AccountModel, cancellationToken);
 
         _logger.LogDebug("Saved account information to {path}", jsonFile.FullName);
     }

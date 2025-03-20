@@ -15,12 +15,16 @@ namespace LettuceEncrypt.Internal;
 /// <summary>
 /// This starts the ACME state machine, which handles certificate generation and renewal
 /// </summary>
+#pragma warning disable CS9113 // Parameter is unread.
 internal class AcmeCertificateLoader(
     IServiceScopeFactory serviceScopeFactory,
     ILogger<AcmeCertificateLoader> logger,
     IServer server,
     IConfiguration config) : BackgroundService {
+#pragma warning restore CS9113 // Parameter is unread.
   protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+
+#if false
     if (!server.GetType().Name.StartsWith(nameof(KestrelServer))) {
       var serverType = server.GetType().FullName;
       logger.LogWarning(
@@ -35,6 +39,7 @@ internal class AcmeCertificateLoader(
           "Skipping certificate provisioning.");
       return;
     }
+#endif
 
     using var acmeStateMachineScope = serviceScopeFactory.CreateScope();
 

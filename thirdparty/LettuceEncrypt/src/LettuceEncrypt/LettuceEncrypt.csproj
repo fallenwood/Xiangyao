@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>Fallenwood.LettuceEncrypt</PackageId>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
@@ -16,6 +15,10 @@ renew the certificate automatically when the expiration date is near.
 This only works with Kestrel, which is the default server configuration for ASP.NET Core projects. Other servers, such as IIS and nginx, are not supported.
     </PackageDescription>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoWarn>RS0016;SYSLIB0026;SYSLIB0027;SYSLIB0028;SYSLIB1100;SYSLIB1101;IL3050;IL2026</NoWarn>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.Extensions.Configuration.Binder.SourceGeneration</InterceptorsNamespaces>
   </PropertyGroup>
 
   <ItemGroup>

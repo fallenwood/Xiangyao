@@ -3,6 +3,7 @@ LettuceEncrypt.ConfigurationManagerExtensions
 LettuceEncrypt.ILettuceEncryptOptionsProvider
 LettuceEncrypt.ILettuceEncryptOptionsProvider.ChangeToken.get -> Microsoft.Extensions.Primitives.IChangeToken!
 LettuceEncrypt.ILettuceEncryptOptionsProvider.SetDomainNames(string![]! addresses) -> void
+LettuceEncrypt.LettuceEncryptJsonContext
 LettuceEncrypt.LettuceEncryptOptionsProvider
 LettuceEncrypt.LettuceEncryptOptionsProvider.ChangeToken.get -> Microsoft.Extensions.Primitives.IChangeToken!
 LettuceEncrypt.LettuceEncryptOptionsProvider.LettuceEncryptOptionsProvider() -> void
