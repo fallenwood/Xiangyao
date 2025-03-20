@@ -9,13 +9,13 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
-    <PackageReference Include="Fallenwood.LettuceEncrypt" />
-    <PackageReference Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" />
     <PackageReference Include="BouncyCastle.Cryptography" />
     <PackageReference Include="ZstdSharp.Port" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\thirdparty\LettuceEncrypt\src\Kestrel.Certificates\McMaster.AspNetCore.Kestrel.Certificates.csproj" />
+    <ProjectReference Include="..\..\thirdparty\LettuceEncrypt\src\LettuceEncrypt\LettuceEncrypt.csproj" />
     <ProjectReference Include="..\Xiangyao.DockerClient\Xiangyao.DockerClient.csproj" />
     <ProjectReference Include="..\Xiangyao.Portal\Xiangyao.Portal.csproj" />
     <ProjectReference Include="..\Xiangyao.Common\Xiangyao.Common.csproj" />

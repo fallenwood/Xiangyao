@@ -4,11 +4,11 @@
     <Project Path="tests/Xiangyao.UnitTests/Xiangyao.UnitTests.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Xiangyao.Common/Xiangyao.Common.csproj" />
+    <Project Path="src/Xiangyao.DockerClient/Xiangyao.DockerClient.csproj" />
     <Project Path="src/Xiangyao.Portal/Xiangyao.Portal.csproj" />
     <Project Path="src/Xiangyao.Telemetry/Xiangyao.Telemetry.csproj" />
-    <Project Path="src/Xiangyao.Common/Xiangyao.Common.csproj" />
     <Project Path="src/Xiangyao/Xiangyao.csproj" />
-    <Project Path="src/Xiangyao.DockerClient/Xiangyao.DockerClient.csproj"/>
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".dockerignore" />
@@ -19,5 +19,10 @@
     <File Path="Dockerfile" />
     <File Path="Dockerfile.distroless" />
     <File Path="Dockerfile.arm64" />
+  </Folder>
+  <Folder Name="/thirdparty/" Id="02ea681e-c7d8-13c7-8484-4ac65e1b71e8">
+    <Project Path="thirdparty/certes/src/Certes/Certes.csproj" />
+    <Project Path="thirdparty/LettuceEncrypt/src/Kestrel.Certificates/McMaster.AspNetCore.Kestrel.Certificates.csproj" />
+    <Project Path="thirdparty/LettuceEncrypt/src/LettuceEncrypt/LettuceEncrypt.csproj" />
   </Folder>
 </Solution>

@@ -1,0 +1,77 @@
+<Project>
+  <PropertyGroup>
+    <PackageReleaseNotes Condition="$(VersionPrefix.StartsWith('1.4.'))">
+New features:
+  * Add Dynamic Confing Provider for DomainNames.
+  * Add LettuceEncrypt.LettuceEncryptOptionsProvider to dynamicly configure LettuceEncryptOptions.
+
+Breaking Changes:
+  * In-memory configuration provider has higher priority than explicit options.
+
+Other:
+  * Added support for .NET 8
+    </PackageReleaseNotes>
+    <PackageReleaseNotes Condition="$(VersionPrefix.StartsWith('1.3.'))">
+New features:
+
+  * Add support for wildcard domains by using DNS challenges to validate domain ownership
+    * See https://github.com/fallenwood/LettuceEncrypt#when-using-dns-01 for details.
+
+  * Add option (#279) and API (#281) to configure additional valid issuers
+    * This is done by configuring certificates as strings. These are passed to certes internally when verifying the issuer.
+      Those certificates must be parseable by https://github.com/bcgit/bc-csharp/blob/830d9b8c7bdfcec511bff0a6cf4a0e8ed568e7c1/crypto/src/x509/X509CertificateParser.cs#L20
+      For details, see https://github.com/fszlin/certes/blob/ffa00c6061b49de17901df0cd997cc7531e1607e/src/Certes/Pkcs/PfxBuilder.cs#L66
+
+Other:
+
+  * Added support for .NET 6 (#280)
+  * Dropped support for .NET Standard 2.0 and .NET Core 3.1 (#280)
+    </PackageReleaseNotes>
+    <PackageReleaseNotes Condition="$(VersionPrefix.StartsWith('1.2.'))">
+New features:
+ * add API for configuring EAB (External Account Binding) credentials
+
+Other:
+ * Update Certes dependency to v3
+ * Dropped support for .NET 5
+    </PackageReleaseNotes>
+    <PackageReleaseNotes Condition="$(VersionPrefix.StartsWith('1.1.'))">
+New features:
+ * Add API for controlling whether HTTP-01, TLS-ALPN-01, or both challenge types are used (#197)
+ * create abstraction for SNI certificates in Kestrel (#108)
+ * add API to configure LettuceEncrypt when also calling 'UseKestrel' to configure its HTTPS defaults or endpoints (#109)
+
+Bug fixes:
+ * workaround bug in Windows SSL stream when generating temporary self-signed certs (#110)
+ * fix race condition  causing domain validation to valid sometimes. Run TLS-ALPN-01 first then HTTP-01 (if needed). Don't run in parallel (#198)
+ * Don't unset other HTTPS adapters which configure a OnAuthenticate callback (#199)
+
+Other:
+ * Update package to target .NET Core 3.1 as 3.0 is no longer supported by Microsoft
+
+Fixes in patch 1.1.1:
+ * Fix infinite loop waiting for verification of domain ownership
+ * Check for certificates that new renewal immediately on server startup instead of waiting 24 hours
+ * Optimize loading intermediate certificate change and reduce unnecessary warnings about invalid certs
+
+Fixes in patch 1.1.2:
+ * Raise validation error if attempting to use wildcards
+    </PackageReleaseNotes>
+    <PackageReleaseNotes Condition="'$(VersionPrefix)' == '1.0.1'">
+* Fix bug in detecting Kestrel in .NET 5
+    </PackageReleaseNotes>
+    <PackageReleaseNotes Condition="'$(VersionPrefix)' == '1.0.0'">
+First release! This is basically the same as McMaster.AspNetCore.LetsEncrypt 0.5.0, but has been renamed.
+
+See https://github.com/fallenwood/LettuceEncrypt/#Usage for instructions.
+
+Changes since 0.5.0:
+* Renamed namespaces, classes, and methods to 'LettuceEncrypt'
+* Fix an error when saving certs to disk when running as a Linux system account with systemd
+* Update dependencies versions to latest
+* Fix invalid and duplicate warnings invalid certificate chains
+    </PackageReleaseNotes>
+
+    <PackageReleaseNotes>$(PackageReleaseNotes.Trim())</PackageReleaseNotes>
+  </PropertyGroup>
+</Project>

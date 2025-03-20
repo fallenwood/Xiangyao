@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>Fallenwood.LettuceEncrypt</PackageId>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <Description>Provides API for configuring ASP.NET Core to automatically generate HTTPS certificates.</Description>
+    <PackageDescription>$(Description)
+
+This configures your server to use the ACME protocol to connect with a certificate authority (CA),
+such as Let's Encrypt (https://letsencrypt.org), to verify ownership of your domain name
+and generate a HTTPS certificate. This happens automatically when the server starts up, and will
+renew the certificate automatically when the expiration date is near.
+
+This only works with Kestrel, which is the default server configuration for ASP.NET Core projects. Other servers, such as IIS and nginx, are not supported.
+    </PackageDescription>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\certes\src\Certes\Certes.csproj" />
+    <ProjectReference Include="..\Kestrel.Certificates\McMaster.AspNetCore.Kestrel.Certificates.csproj" />
+  </ItemGroup>
+
+</Project>

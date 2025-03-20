@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LettuceEncrypt\LettuceEncrypt.csproj" />
+  </ItemGroup>
+</Project>

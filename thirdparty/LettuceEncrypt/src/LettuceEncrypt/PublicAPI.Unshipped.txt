@@ -1,0 +1,11 @@
+#nullable enable
+LettuceEncrypt.ConfigurationManagerExtensions
+LettuceEncrypt.ILettuceEncryptOptionsProvider
+LettuceEncrypt.ILettuceEncryptOptionsProvider.ChangeToken.get -> Microsoft.Extensions.Primitives.IChangeToken!
+LettuceEncrypt.ILettuceEncryptOptionsProvider.SetDomainNames(string![]! addresses) -> void
+LettuceEncrypt.LettuceEncryptOptionsProvider
+LettuceEncrypt.LettuceEncryptOptionsProvider.ChangeToken.get -> Microsoft.Extensions.Primitives.IChangeToken!
+LettuceEncrypt.LettuceEncryptOptionsProvider.LettuceEncryptOptionsProvider() -> void
+LettuceEncrypt.LettuceEncryptOptionsProvider.SetDomainNames(string![]! domainNames) -> void
+static LettuceEncrypt.ConfigurationManagerExtensions.AddLettuceEncryptOptionsProvider(this Microsoft.Extensions.Configuration.ConfigurationManager! manager, LettuceEncrypt.ILettuceEncryptOptionsProvider! provider) -> Microsoft.Extensions.Configuration.ConfigurationManager!
+static Microsoft.Extensions.DependencyInjection.LettuceEncryptServiceCollectionExtensions.AddLettuceEncrypt(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<LettuceEncrypt.LettuceEncryptOptions!>! configure, Microsoft.Extensions.Configuration.IConfiguration? configuration) -> LettuceEncrypt.ILettuceEncryptServiceBuilder!
