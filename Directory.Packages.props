@@ -20,6 +20,8 @@
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.5.1" />
     <PackageVersion Include="Portable.BouncyCastle" Version="1.9.0" />
 
+    <PackageVersion Include="Fallenwood.PublishAotCross" Version="0.1.2" />
+
     <!-- Analyzers -->
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
 

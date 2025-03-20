@@ -15,6 +15,7 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
     <PackageReference Include="BouncyCastle.Cryptography" />
     <PackageReference Include="ZstdSharp.Port" />
+    <PackageReference Include="Fallenwood.PublishAotCross" />
   </ItemGroup>
 
   <ItemGroup>
