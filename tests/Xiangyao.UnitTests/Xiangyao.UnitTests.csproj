@@ -14,12 +14,12 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="ZLinq" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Xiangyao\Xiangyao.csproj" />
     <ProjectReference Include="..\..\src\Xiangyao.DockerClient\Xiangyao.DockerClient.csproj" />
-    <ProjectReference Include="..\..\src\Xiangyao.ZLinq\Xiangyao.ZLinq.csproj" />
   </ItemGroup>
 
   <ItemGroup>
