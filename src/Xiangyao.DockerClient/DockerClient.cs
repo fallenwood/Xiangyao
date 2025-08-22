@@ -33,16 +33,16 @@ public class DockerClient(HttpClient httpClient, string baseUrl = "http://localh
 
     var payload = await JsonSerializer.DeserializeAsync(stream, DockerJsonContext.Default.ListContainerDockerResponseArray);
     
-    return payload?.Select(r => new ListContainerResponse {
+    return [.. payload?.Select(r => new ListContainerResponse {
       Id = r.Id,
-      Labels = r.Labels.Select(e => new Label { Name = e.Key, Value = e.Value}).ToArray(),
+      Labels = [.. r.Labels.Select(e => new Label { Name = e.Key, Value = e.Value})],
       Names = r.Names,
-      NetworkSettings = r.NetworkSettings.Networks.Select(e => new NetworkEntry {
+      NetworkSettings = [.. r.NetworkSettings.Networks.Select(e => new NetworkEntry {
         Name = e.Key,
         IPAddress = e.Value.IPAddress,
         GlobalIPv6Address = e.Value.GlobalIPv6Address,
-      }).ToArray(),
-    }).ToArray() ?? [];
+      })],
+    }) ?? []];
   }
 
   public async Task MonitorEventsAsync(

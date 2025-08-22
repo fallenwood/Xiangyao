@@ -63,10 +63,9 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     var clusters = new List<YRC.ClusterConfig>(allContainers.Length);
 
     foreach (var container in allContainers) {
-      var labels = container
+      Label[] labels = [.. container
         .Labels
-        .Where(e => e.Name.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))
-        .ToArray();
+        .Where(e => e.Name.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))];
 
       var enabled = this.labelParser.ParseEnabled(labels);
 
@@ -156,7 +155,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
     var clusterId = container.Names[0];
 
-    var routes = parsedLabels
+    List<YRC.RouteConfig> routes = [.. parsedLabels
       .Select(kvp => {
         var c = kvp.Value;
 
@@ -170,8 +169,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
         };
 
         return config.WithTransformUseOriginalHostHeader(useOriginal: true);
-      })
-      .ToList();
+      })];
 
     return routes;
   }
@@ -192,7 +190,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
     Interlocked.Exchange(ref this.config, newConfig);
 
-    var addresses = newConfig.ProxyConfig.Routes.SelectMany(e => e.Match.Hosts ?? []).Distinct().ToArray();
+    string[] addresses = [.. newConfig.ProxyConfig.Routes.SelectMany(e => e.Match.Hosts ?? []).Distinct()];
 
     if (addresses.Length > 0) {
       this.lettuceEncryptOptionsProvider.SetDomainNames(addresses);
