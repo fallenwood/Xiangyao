@@ -3,7 +3,6 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.12.0-beta1.25076.4" PrivateAssets="All" />
     <PackageVersion Include="ConsoleAppFramework" Version="5.5.0" />
@@ -19,9 +18,9 @@
     <PackageVersion Include="Fallenwood.LettuceEncrypt" Version="1.4.0-alpha0-beta.42" />
     <PackageVersion Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" Version="1.0.0" />
     <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="9.0.3" />
+    <PackageVersion Include="ZLinq" Version="1.4.8" />
     <PackageVersion Include="ZstdSharp.Port" Version="0.8.5" />
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.5.1" />
-
     <!-- tests -->
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
@@ -30,5 +29,4 @@
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.13.12" />
   </ItemGroup>
-
 </Project>
