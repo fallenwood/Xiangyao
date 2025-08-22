@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Xiangyao.Common\Xiangyao.Common.csproj" />
+    <ProjectReference Include="..\Xiangyao.ZLinq\Xiangyao.ZLinq.csproj" />
   </ItemGroup>
 
   <ItemGroup>
