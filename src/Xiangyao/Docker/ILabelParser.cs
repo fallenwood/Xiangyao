@@ -1,6 +1,7 @@
 namespace Xiangyao;
 
 using Xiangyao.Docker;
+using ZLinq;
 
 internal interface ILabelParser {
   public IReadOnlyDictionary<string, RouteConfig> ParseRouteConfigs(Label[] labels) {
@@ -15,6 +16,7 @@ internal interface ILabelParser {
 
   public bool ParseEnabled(Label[] labels) {
     var enabled = labels
+      .AsValueEnumerable()
       .FirstOrDefault(e =>
         string.Equals(e.Name, XiangyaoConstants.EnableLabelKey, StringComparison.OrdinalIgnoreCase))
         ?.Value;
@@ -28,14 +30,14 @@ internal interface ILabelParser {
   }
 
   public string ParseHost(ListContainerResponse container) {
-    var fisrtNetwork = container.NetworkSettings?.FirstOrDefault();
+    var fisrtNetwork = container.NetworkSettings?.AsValueEnumerable().FirstOrDefault();
     var host = fisrtNetwork?.IPAddress;
 
     return host ?? string.Empty;
   }
 
   public string ParseSchema(Label[] labels) {
-    var schema = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.SchemaLabelKey)?.Value;
+    var schema = labels.AsValueEnumerable().FirstOrDefault(e => e.Name == XiangyaoConstants.SchemaLabelKey)?.Value;
 
     if (string.IsNullOrEmpty(schema)) {
       schema = XiangyaoConstants.Http;
@@ -45,12 +47,12 @@ internal interface ILabelParser {
   }
 
   public string? ParseCustomHost(Label[] labels) {
-    var host = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.HostLabelKey)?.Value;
+    var host = labels.AsValueEnumerable().FirstOrDefault(e => e.Name == XiangyaoConstants.HostLabelKey)?.Value;
     return host;
   }
 
   public int ParsePort(Label[] labels) {
-    var portString = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.PortLabelKey)?.Value;
+    var portString = labels.AsValueEnumerable().FirstOrDefault(e => e.Name == XiangyaoConstants.PortLabelKey)?.Value;
     if (string.IsNullOrEmpty(portString) || !int.TryParse(portString, out var port)) {
       return XiangyaoConstants.HttpPort;
     }
@@ -59,7 +61,7 @@ internal interface ILabelParser {
   }
 
   public string ParseSocketPath(Label[] labels) {
-    var path = labels.FirstOrDefault(e => e.Name == XiangyaoConstants.UnixSocketPathLabelKey)?.Value;
+    var path = labels.AsValueEnumerable().FirstOrDefault(e => e.Name == XiangyaoConstants.UnixSocketPathLabelKey)?.Value;
     return path ?? string.Empty;
   }
 

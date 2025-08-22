@@ -15,6 +15,7 @@
     <PackageReference Include="Fallenwood.LettuceEncrypt" />
     <PackageReference Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" />
     <PackageReference Include="BouncyCastle.Cryptography" />
+    <PackageReference Include="ZLinq" />
     <PackageReference Include="ZstdSharp.Port" />
   </ItemGroup>
 

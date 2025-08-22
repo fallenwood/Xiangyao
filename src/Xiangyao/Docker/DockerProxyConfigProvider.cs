@@ -4,6 +4,7 @@ using System.Threading;
 using LettuceEncrypt;
 using Xiangyao.Docker;
 using Xiangyao.Telemetry;
+using ZLinq;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Transforms;
 using YRC = Yarp.ReverseProxy.Configuration;
@@ -55,7 +56,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
     if (logger.IsEnabled(LogLevel.Debug)) {
       foreach (var c in allContainers) {
-        logger.LogDebug("Container {Id} {Name} {Status}", c.Id, c.Names.FirstOrDefault(), c.Status);
+        logger.LogDebug("Container {Id} {Name} {Status}", c.Id, c.Names.AsValueEnumerable().FirstOrDefault(), c.Status);
       }
     }
 
@@ -91,7 +92,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
         };
 
         if (string.IsNullOrEmpty(host)) {
-          this.logger.LogInformation("No valid host found for {Name}", container.Names.FirstOrDefault());
+          this.logger.LogInformation("No valid host found for {Name}", container.Names.AsValueEnumerable().FirstOrDefault());
           continue;
         }
 
