@@ -1,10 +1,11 @@
-﻿namespace Xiangyao;
+namespace Xiangyao;
 
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Xiangyao.Api;
 using ZLinq;
 
 public class Portal {
@@ -47,7 +48,9 @@ public class Portal {
 
       var config = configProvider.Config;
 
-      return Results.Ok(config);
+      var response = ConfigurationResponse.From(config);
+
+      return Results.Ok(response);
     });
 
     app.UseStaticFiles(staticFileOptions);

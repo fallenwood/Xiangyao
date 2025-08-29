@@ -7,6 +7,8 @@ public class FileProxyConfigProvider(IProxyConfigProvider configProvider) : IXia
 
   public IChangeNotifier Notifier { get; } = new NoopChangeNotifier();
 
+  public string Provider => "File";
+
   public IProxyConfig GetConfig() {
     return configProvider.GetConfig();
   }

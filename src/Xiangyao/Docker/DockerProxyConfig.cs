@@ -1,15 +1,18 @@
 namespace Xiangyao;
 
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Primitives;
 using Yarp.ReverseProxy.Configuration;
 
+using YRC = Yarp.ReverseProxy.Configuration;
+
 internal class DockerProxyConfig(
-  IReadOnlyList<Yarp.ReverseProxy.Configuration.RouteConfig> routes,
+  IReadOnlyList<YRC.RouteConfig> routes,
   IReadOnlyList<ClusterConfig> clusters,
   CancellationToken cancellationToken)
   : IProxyConfig {
 
-  public IReadOnlyList<Yarp.ReverseProxy.Configuration.RouteConfig> Routes { get; } = routes;
+  public IReadOnlyList<YRC.RouteConfig> Routes { get; } = routes;
 
   public IReadOnlyList<ClusterConfig> Clusters { get; } = clusters;
 

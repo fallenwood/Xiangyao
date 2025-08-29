@@ -47,6 +47,8 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
   public IChangeNotifier Notifier { get; private set; }
 
+  public string Provider => "Docker";
+
   public async Task<XiangyaoProxyConfig> GetXiangyaoProxyConfigAsync() {
     logger.LogDebug(nameof(GetXiangyaoProxyConfigAsync));
 

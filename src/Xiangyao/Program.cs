@@ -37,7 +37,7 @@ public static partial class Program {
   /// <param name="otelMeterEndpoint">--otel-meter, Opentelemetry Meter Endpoint</param>
   /// <param name="certificate">--certificate-path, The fullchain.pem</param>
   /// <param name="certificateKey">--certificate-key-path, The privkey.pem</param>
-  /// <param name="usePortal">--portal,--enable-portal,Enable portal</param>
+  /// <param name="usePortal">--portal,--enable-portal, --use-portal, Enable portal</param>
   /// <param name="portalPort">Portal port</param>
   static async Task PreMainAsync(
     Provider provider = Provider.Docker,
