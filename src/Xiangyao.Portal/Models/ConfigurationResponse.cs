@@ -21,13 +21,17 @@ public record ConfigurationResponse(
         UnixSocketPath: unixSocketPath);
     }).ToArray();
 
+    var cluserIdToCluster = clusters.AsValueEnumerable().ToDictionary(c => c.ClusterId, c => c);
 
     var routes = config.ProxyConfig.Routes.AsValueEnumerable().Select(r => {
       return new Route(
         RouteId: r.RouteId,
         Order: r.Order,
         ClusterId: r.ClusterId,
-        Cluster: null);
+        Cluster: r.ClusterId != null ? cluserIdToCluster[r.ClusterId] : null,
+        RouteMatch: new(
+          Hosts: r.Match.Hosts?.AsEnumerable().ToArray(),
+          Path: r.Match.Path));
       }).ToArray();
 
     return new ConfigurationResponse(
@@ -47,7 +51,8 @@ public record Route(
   string RouteId,
   int? Order,
   string? ClusterId,
-  Cluster? Cluster);
+  Cluster? Cluster,
+  RouteMatch RouteMatch);
 
 public record RouteMatch(
   string[]? Hosts,

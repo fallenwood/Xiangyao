@@ -12,6 +12,8 @@ export interface Route {
   routeId: string;
   order: number | undefined;
   clusterId: string | undefined;
+  cluster: Cluster | undefined;
+  routeMatch: RouteMatch;
 }
 
 export interface RouteMatch {
