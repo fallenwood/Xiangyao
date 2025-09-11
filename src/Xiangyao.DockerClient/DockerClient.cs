@@ -1,8 +1,8 @@
 namespace Xiangyao.Docker;
 
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
-using System.Linq;
 
 public record ContainerEventsParameters {
 
@@ -55,9 +55,8 @@ public class DockerClient(HttpClient httpClient, string baseUrl = "http://localh
     var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
     var reader = new StreamReader(stream);
 
-    while (!reader.EndOfStream) {
-      var line = await reader.ReadLineAsync(cancellationToken);
-
+    string? line;
+    while ((line = await reader.ReadLineAsync(cancellationToken)) is not null) {
       if (string.IsNullOrEmpty(line)) {
         continue;
       }
