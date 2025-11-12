@@ -12,7 +12,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <!-- Features>$(Features);runtime-async=on</Features -->
+    <Features>$(Features);runtime-async=on</Features>
     <NoWarn>$(NoWarn);NU5105;SYSLIB5007;NU1903</NoWarn>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CS1591</WarningsNotAsErrors>
     <IsPackableFalseWarningTask>false</IsPackableFalseWarningTask>
