@@ -1,7 +1,7 @@
 using Xiangyao;
 
 using Yarp.ReverseProxy.Configuration;
-using LettuceEncrypt;
+using Xiangyao.Acme;
 using ConsoleAppFramework;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Logs;
@@ -28,7 +28,7 @@ public static partial class Program {
   /// <param name="provider">-p, Config Provider (e.g. None, File, Docker, etc.)</param>
   /// <param name="useHttps">--https, Use HTTPS</param>
   /// <param name="useHttpsRedirect">--https-redirect, Use HTTPS Redirect</param>
-  /// <param name="useLetsEncrypt">--lets-encrypt, Use Let's Encrypt</param>
+  /// <param name="useLetsEncrypt">--lets-encrypt, Use Let's Encrypt (alias for --use-acme with HTTP-01 challenge)</param>
   /// <param name="letsEncryptEmailAddress">--lets-encrypt-email, Let's Encrypt Email Address</param>
   /// <param name="letsEncryptDomainNames">Let's Encrypt Domain Names</param>
   /// <param name="useOtel">Use Opentelemetry</param>
@@ -39,6 +39,12 @@ public static partial class Program {
   /// <param name="certificateKey">--certificate-key-path, The privkey.pem</param>
   /// <param name="usePortal">--portal,--enable-portal,Enable portal</param>
   /// <param name="portalPort">Portal port</param>
+  /// <param name="useAcme">--acme, Enable ACME certificate management</param>
+  /// <param name="acmeChallengeMode">ACME challenge type (Http01, Dns01, TlsAlpn01)</param>
+  /// <param name="acmeEmail">ACME account email address</param>
+  /// <param name="acmeDomains">ACME domain names</param>
+  /// <param name="acmeDirectoryUrl">ACME directory URL</param>
+  /// <param name="acmeCertificateDirectory">ACME certificate storage directory</param>
   static async Task PreMainAsync(
     Provider provider = Provider.Docker,
     bool useHttps = false,
@@ -53,7 +59,13 @@ public static partial class Program {
     string certificate = "",
     string certificateKey = "",
     bool usePortal = false,
-    int portalPort = 8080) {
+    int portalPort = 8080,
+    bool useAcme = false,
+    AcmeChallengeMode acmeChallengeMode = AcmeChallengeMode.Http01,
+    string acmeEmail = "",
+    string[]? acmeDomains = null,
+    string acmeDirectoryUrl = "https://acme-v02.api.letsencrypt.org/directory",
+    string acmeCertificateDirectory = "./certificates") {
     var options = new Options(
       LetsEncryptDomainNames: letsEncryptDomainNames ?? [],
       Provider: provider,
@@ -68,20 +80,49 @@ public static partial class Program {
       OtelTraceEndpoint: otelTraceEndpoint,
       OtelMeterEndpoint: otelMeterEndpoint,
       UsePortal: usePortal,
-      PortalPort: portalPort);
+      PortalPort: portalPort,
+      UseAcme: useAcme,
+      AcmeChallengeMode: acmeChallengeMode,
+      AcmeEmail: acmeEmail,
+      AcmeDomains: acmeDomains ?? [],
+      AcmeDirectoryUrl: acmeDirectoryUrl,
+      AcmeCertificateDirectory: acmeCertificateDirectory);
 
     await MainAsync(options);
   }
 
   /// <param
   static async Task MainAsync(Options options) {
-    var provider = new LettuceEncryptOptionsProvider();
+    // Determine if ACME is enabled (either via new --acme flag or legacy --lets-encrypt flag)
+    var useAcme = options.UseAcme || options.UseLetsEncrypt;
+
+    // Build ACME options from either new options or legacy Let's Encrypt options
+    var acmeEmail = !string.IsNullOrEmpty(options.AcmeEmail) ? options.AcmeEmail : options.LetsEncryptEmailAddress;
+    var acmeDomains = options.AcmeDomains.Length > 0 ? options.AcmeDomains : options.LetsEncryptDomainNames;
+    var acmeChallengeMode = options.UseAcme ? options.AcmeChallengeMode : AcmeChallengeMode.Http01;
+    var acmeDirectoryUrl = options.AcmeDirectoryUrl;
+    var acmeCertificateDirectory = options.UseAcme
+      ? options.AcmeCertificateDirectory
+      : Path.Join(Directory.GetCurrentDirectory(), "certificates");
+
+    var acmeOptionsProvider = new AcmeOptionsProvider {
+      EmailAddress = acmeEmail,
+      CertificateDirectory = acmeCertificateDirectory,
+      AcmeDirectoryUrl = acmeDirectoryUrl,
+      ChallengeType = acmeChallengeMode switch {
+        AcmeChallengeMode.Http01 => ChallengeType.Http01,
+        AcmeChallengeMode.Dns01 => ChallengeType.Dns01,
+        AcmeChallengeMode.TlsAlpn01 => ChallengeType.TlsAlpn01,
+        _ => ChallengeType.Http01
+      }
+    };
+    acmeOptionsProvider.SetDomainNames(acmeDomains);
 
     var builder = WebApplication.CreateSlimBuilder([]);
 
-    builder.Configuration.AddLettuceEncryptOptionsProvider(provider);
+    builder.Configuration.AddAcmeOptionsProvider(acmeOptionsProvider);
 
-    builder.Services.AddSingleton<ILettuceEncryptOptionsProvider>(provider);
+    builder.Services.AddSingleton<IAcmeOptionsProvider>(acmeOptionsProvider);
 
     switch (options.Provider) {
       case Provider.None:
@@ -96,24 +137,15 @@ public static partial class Program {
     }
 
     if (options.UseHttps) {
-      if (options.UseLetsEncrypt) {
-        Console.WriteLine($"Use LetsEncrypt with {options.LetsEncryptEmailAddress} for {string.Join(",", options.LetsEncryptDomainNames)}");
+      if (useAcme) {
+        var challengeTypeStr = acmeChallengeMode.ToString();
+        Console.WriteLine($"Use ACME ({challengeTypeStr}) with {acmeEmail} for {string.Join(",", acmeDomains)}");
 
-        builder
-          .Services
-          .AddLettuceEncrypt(
-            o => {
-              o.AcceptTermsOfService = true;
-              o.EmailAddress = options.LetsEncryptEmailAddress;
-              o.DomainNames = options.LetsEncryptDomainNames;
-              o.AllowedChallengeTypes = LettuceEncrypt.Acme.ChallengeType.Http01;
-            },
-            builder.Configuration)
-          .PersistDataToDirectory(new(Path.Join(Directory.GetCurrentDirectory(), "letsencrypt")), pfxPassword: null);
+        builder.Services.AddAcme(acmeOptionsProvider);
 
         builder.WebHost.UseKestrel(kestrel => {
           kestrel.ConfigureHttpsDefaults(h => {
-            h.UseLettuceEncrypt(kestrel.ApplicationServices);
+            h.UseAcmeCertificates(kestrel.ApplicationServices);
           });
 
           kestrel.ConfigureEndpointDefaults(e => {
@@ -201,6 +233,11 @@ public static partial class Program {
 
     if (options.UseHttpsRedirect) {
       app.UseHttpsRedirection();
+    }
+
+    // Enable ACME HTTP-01 challenge endpoint when using ACME with HTTP-01 challenge
+    if (useAcme && acmeChallengeMode == AcmeChallengeMode.Http01) {
+      app.UseAcmeHttp01Challenge();
     }
 
     app.MapReverseProxy();

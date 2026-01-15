@@ -15,7 +15,6 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.12.0" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.3.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.3" />
-    <PackageVersion Include="Fallenwood.LettuceEncrypt" Version="1.4.0-alpha0-beta.42" />
     <PackageVersion Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" Version="1.0.0" />
     <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="9.0.3" />
     <PackageVersion Include="ZLinq" Version="1.4.8" />

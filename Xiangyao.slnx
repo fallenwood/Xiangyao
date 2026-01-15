@@ -2,6 +2,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Xiangyao.Benchmarks/Xiangyao.Benchmarks.csproj" />
     <Project Path="tests/Xiangyao.UnitTests/Xiangyao.UnitTests.csproj" />
+    <Project Path="tests/Xiangyao.Acme.UnitTests/Xiangyao.Acme.UnitTests.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Xiangyao.Portal/Xiangyao.Portal.csproj" />
@@ -9,6 +10,7 @@
     <Project Path="src/Xiangyao.Common/Xiangyao.Common.csproj" />
     <Project Path="src/Xiangyao/Xiangyao.csproj" />
     <Project Path="src/Xiangyao.DockerClient/Xiangyao.DockerClient.csproj"/>
+    <Project Path="src/Xiangyao.Acme/Xiangyao.Acme.csproj"/>
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".dockerignore" />

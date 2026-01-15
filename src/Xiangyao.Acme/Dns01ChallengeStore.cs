@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
-
 namespace Xiangyao.Acme;
+
+using System.Collections.Concurrent;
 
 public enum ChallengeType {
   Http01,

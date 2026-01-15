@@ -1,11 +1,45 @@
+namespace Xiangyao.Acme;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 
-namespace Xiangyao.Acme;
-
 public static class AcmeExtensions {
+  /// <summary>
+  /// Adds ACME services with HTTP-01 challenge support.
+  /// </summary>
+  /// <param name="services">The service collection.</param>
+  /// <param name="configure">Optional configuration action.</param>
+  /// <returns>The service collection for chaining.</returns>
+  public static IServiceCollection AddAcme(
+    this IServiceCollection services,
+    Action<AcmeOptionsProvider>? configure = null) {
+    var optionsProvider = new AcmeOptionsProvider();
+    configure?.Invoke(optionsProvider);
+
+    services.AddSingleton<IAcmeOptionsProvider>(optionsProvider);
+    services.AddSingleton<IHttp01ChallengeStore, Http01ChallengeStore>();
+    services.AddSingleton<AcmeCertificateRenewalService>();
+    services.AddHostedService(sp => sp.GetRequiredService<AcmeCertificateRenewalService>());
+
+    return services;
+  }
+
+  /// <summary>
+  /// Adds ACME services with a pre-configured options provider.
+  /// </summary>
+  public static IServiceCollection AddAcme(
+    this IServiceCollection services,
+    IAcmeOptionsProvider optionsProvider) {
+    services.AddSingleton(optionsProvider);
+    services.AddSingleton<IHttp01ChallengeStore, Http01ChallengeStore>();
+    services.AddSingleton<AcmeCertificateRenewalService>();
+    services.AddHostedService(sp => sp.GetRequiredService<AcmeCertificateRenewalService>());
+
+    return services;
+  }
+
   public static IServiceCollection AddAcmeHttp01Challenge(this IServiceCollection services) {
     services.AddSingleton<IHttp01ChallengeStore, Http01ChallengeStore>();
     return services;

@@ -1,6 +1,6 @@
-using System.Net.Http.Json;
-
 namespace Xiangyao.Acme.DnsProviders;
+
+using System.Net.Http.Json;
 
 /// <summary>
 /// Manual DNS provider for testing - requires manual DNS record creation

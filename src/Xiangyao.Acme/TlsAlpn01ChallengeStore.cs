@@ -1,9 +1,9 @@
+namespace Xiangyao.Acme;
+
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-
-namespace Xiangyao.Acme;
 
 public interface ITlsAlpn01ChallengeStore {
   void AddChallenge(string domain, byte[] keyAuthorization);

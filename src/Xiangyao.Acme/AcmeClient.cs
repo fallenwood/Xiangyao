@@ -1,3 +1,5 @@
+namespace Xiangyao.Acme;
+
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
@@ -7,8 +9,6 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
-
-namespace Xiangyao.Acme;
 
 public class AcmeClient : IDisposable {
   private readonly HttpClient _httpClient;

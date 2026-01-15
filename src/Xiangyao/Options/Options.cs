@@ -6,6 +6,12 @@ internal enum Provider : int {
   Docker,
 }
 
+internal enum AcmeChallengeMode : int {
+  Http01,
+  Dns01,
+  TlsAlpn01,
+}
+
 internal sealed record Options(
   string[] LetsEncryptDomainNames,
   Provider Provider = Provider.Docker,
@@ -20,4 +26,11 @@ internal sealed record Options(
   string OtelTraceEndpoint = "",
   string OtelMeterEndpoint = "",
   bool UsePortal = false,
-  int PortalPort = 8080);
+  int PortalPort = 8080,
+  // New ACME options
+  bool UseAcme = false,
+  AcmeChallengeMode AcmeChallengeMode = AcmeChallengeMode.Http01,
+  string AcmeEmail = "",
+  string[] AcmeDomains = default!,
+  string AcmeDirectoryUrl = "https://acme-v02.api.letsencrypt.org/directory",
+  string AcmeCertificateDirectory = "./certificates");

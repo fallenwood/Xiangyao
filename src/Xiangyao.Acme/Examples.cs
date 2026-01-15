@@ -1,9 +1,9 @@
+namespace Xiangyao.Acme.Examples;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Xiangyao.Acme;
 using Xiangyao.Acme.DnsProviders;
-
-namespace Xiangyao.Acme.Examples;
 
 public static class UsageExamples {
   // Example 1: HTTP-01 Challenge (original)

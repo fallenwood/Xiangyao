@@ -1,3 +1,5 @@
+namespace Xiangyao.Acme;
+
 using System.Net.Http.Json;
 using System.Security.Cryptography.X509Certificates;
 using Org.BouncyCastle.Crypto;
@@ -5,8 +7,6 @@ using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using BcX509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using BcX509CertificateParser = Org.BouncyCastle.X509.X509CertificateParser;
-
-namespace Xiangyao.Acme;
 
 public interface IDnsProvider {
   Task CreateTxtRecordAsync(string domain, string name, string value, CancellationToken cancellationToken = default);
