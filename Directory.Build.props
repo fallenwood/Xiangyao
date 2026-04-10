@@ -14,7 +14,7 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <Features>$(Features);runtime-async=on</Features>
-    <NoWarn>$(NoWarn);NU5105;SYSLIB5007;NU1903</NoWarn>
+    <NoWarn>$(NoWarn);NU5105;SYSLIB5007;NU1903;CA2252</NoWarn>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CS1591</WarningsNotAsErrors>
     <IsPackableFalseWarningTask>false</IsPackableFalseWarningTask>
 
