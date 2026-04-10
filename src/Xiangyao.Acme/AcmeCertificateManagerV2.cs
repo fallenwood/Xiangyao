@@ -222,11 +222,7 @@ public class AcmeCertificateManagerV2 {
   }
 
   private async Task<AcmeOrder> GetOrderAsync(string orderUrl, CancellationToken cancellationToken) {
-    var client = new HttpClient();
-    var response = await client.GetAsync(orderUrl, cancellationToken);
-    response.EnsureSuccessStatusCode();
-    var order = await response.Content.ReadFromJsonAsync<AcmeOrder>(cancellationToken);
-    return order ?? throw new AcmeException("Failed to get order");
+    return await _client.GetOrderAsync(orderUrl, cancellationToken);
   }
 
   private static AsymmetricCipherKeyPair GenerateRsaKeyPair(int keySize = 2048) {

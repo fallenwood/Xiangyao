@@ -18,14 +18,20 @@ public class AcmeClient : IDisposable {
   private string? _nonce;
   private string? _kid;
 
-  public AcmeClient(string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory") {
-    _httpClient = new HttpClient();
-    _directoryUrl = directoryUrl;
-    _accountKey = GenerateRsaKeyPair();
+  public AcmeClient(string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory")
+    : this(new HttpClient(), GenerateRsaKeyPair(), directoryUrl) {
   }
 
-  public AcmeClient(AsymmetricCipherKeyPair accountKey, string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory") {
-    _httpClient = new HttpClient();
+  public AcmeClient(HttpClient httpClient, string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory")
+    : this(httpClient, GenerateRsaKeyPair(), directoryUrl) {
+  }
+
+  public AcmeClient(AsymmetricCipherKeyPair accountKey, string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory")
+    : this(new HttpClient(), accountKey, directoryUrl) {
+  }
+
+  public AcmeClient(HttpClient httpClient, AsymmetricCipherKeyPair accountKey, string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory") {
+    _httpClient = httpClient;
     _directoryUrl = directoryUrl;
     _accountKey = accountKey;
   }
@@ -90,6 +96,13 @@ public class AcmeClient : IDisposable {
     var response = await SendSignedRequestAsync(finalizeUrl, payload, useKid: true, cancellationToken: cancellationToken);
     var order = await response.Content.ReadFromJsonAsync<AcmeOrder>(cancellationToken);
     return order ?? throw new AcmeException("Failed to finalize order");
+  }
+
+  public async Task<AcmeOrder> GetOrderAsync(string orderUrl, CancellationToken cancellationToken = default) {
+    var response = await _httpClient.GetAsync(orderUrl, cancellationToken);
+    response.EnsureSuccessStatusCode();
+    var order = await response.Content.ReadFromJsonAsync<AcmeOrder>(cancellationToken);
+    return order ?? throw new AcmeException("Failed to get order");
   }
 
   public async Task<string> DownloadCertificateAsync(string certificateUrl, CancellationToken cancellationToken = default) {

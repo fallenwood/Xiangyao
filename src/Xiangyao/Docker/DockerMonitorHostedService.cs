@@ -49,16 +49,22 @@ internal class DockerMonitorHostedService(
   }
 
   protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+    var shouldRefresh = true;
+
     while (!stoppingToken.IsCancellationRequested) {
       var lastCount = proxyConfigProvider.Notifier.ResetCount();
       var notifierToken = proxyConfigProvider.Notifier.Source.Token;
+      var periodicRefresh = step == MaxStep;
+      shouldRefresh = shouldRefresh || lastCount > 0 || periodicRefresh;
 
-      var delayTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+      if (shouldRefresh) {
+        try {
+          await proxyConfigProvider.Notifier.HandleAsync();
+        } catch (Exception ex) {
+          logger.LogError(ex, "Error updating configuration");
+        }
 
-      try {
-        await proxyConfigProvider.Notifier.HandleAsync();
-      } catch (Exception ex) {
-        logger.LogError(ex, "Error updating configuration");
+        shouldRefresh = false;
       }
 
       if (lastCount > 0) {
@@ -67,6 +73,7 @@ internal class DockerMonitorHostedService(
         step = Math.Min(step * 2, MaxStep);
       }
 
+      using var delayTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
       var delay = Task.Delay(step * Interval, delayTokenSource.Token);
       var notify = Task.Delay(Timeout.InfiniteTimeSpan, notifierToken);
 
@@ -75,6 +82,7 @@ internal class DockerMonitorHostedService(
       if (wakeup == notify) {
         logger.LogInformation("Wakeup");
         step = 1;
+        shouldRefresh = true;
         delayTokenSource.Cancel();
       } else {
         logger.LogDebug("Delay");

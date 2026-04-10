@@ -3,13 +3,11 @@ namespace Xiangyao;
 using System.Threading;
 using Xiangyao.Docker;
 using Xiangyao.Telemetry;
-using ZLinq;
 using Yarp.ReverseProxy.Configuration;
 using Yarp.ReverseProxy.Transforms;
 using YRC = Yarp.ReverseProxy.Configuration;
 
 internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
-  private const long Threshold = 60 * 1000;
   public const string UnixSocket = "UnixSocket";
 
   private readonly IDockerProvider dockerProvider;
@@ -17,8 +15,10 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   private readonly ILabelParser labelParser;
   private readonly IAcmeDomainProvider acmeDomainProvider;
   private readonly OpenTelemetryMeterProvider? meterProvider;
+  private readonly SemaphoreSlim refreshLock = new(1, 1);
 
   private CancellationTokenSource source = new();
+  private volatile bool hasLoadedConfig;
 
   private XiangyaoProxyConfig config;
 
@@ -39,23 +39,42 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
       ProxyConfig: new DockerProxyConfig(
       [],
       [],
-      this.Notifier.Source.Token));
+      this.source.Token));
   }
 
-  public XiangyaoProxyConfig Config => config;
+  public XiangyaoProxyConfig Config => this.config;
 
   public IChangeNotifier Notifier { get; private set; }
 
-  public async Task<XiangyaoProxyConfig> GetXiangyaoProxyConfigAsync() {
-    logger.LogDebug(nameof(GetXiangyaoProxyConfigAsync));
+  public IProxyConfig GetConfig() {
+    this.logger.LogDebug(nameof(GetConfig));
+
+    if (!this.hasLoadedConfig) {
+      this.RefreshConfigAsync(forceRefresh: false).GetAwaiter().GetResult();
+    }
+
+    var currentConfig = this.config.ProxyConfig;
+
+    this.logger.LogInformation("Current Config: {Routes} Routes, {Clusters} Clusters", currentConfig.Routes.Count, currentConfig.Clusters.Count);
+
+    return currentConfig;
+  }
+
+  public void Update() {
+    this.logger.LogDebug(nameof(Update));
+
+    this.Notifier.Notify();
+  }
+
+  private async Task<XiangyaoProxyConfig> BuildXiangyaoProxyConfigAsync(CancellationToken changeToken) {
+    this.logger.LogDebug(nameof(BuildXiangyaoProxyConfigAsync));
 
     var client = this.dockerProvider.DockerClient;
-
     var allContainers = await client.ListContainersAsync();
 
-    if (logger.IsEnabled(LogLevel.Debug)) {
-      foreach (var c in allContainers) {
-        logger.LogDebug("Container {Id} {Name} {Status}", c.Id, c.Names.AsValueEnumerable().FirstOrDefault(), c.Status);
+    if (this.logger.IsEnabled(LogLevel.Debug)) {
+      foreach (var container in allContainers) {
+        this.logger.LogDebug("Container {Id} {Name} {Status}", container.Id, GetContainerName(container), container.Status);
       }
     }
 
@@ -63,13 +82,9 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     var clusters = new List<YRC.ClusterConfig>(allContainers.Length);
 
     foreach (var container in allContainers) {
-      Label[] labels = [.. container
-        .Labels
-        .Where(e => e.Name.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase))];
+      var containerLabels = this.ParseContainerLabels(container.Labels);
 
-      var enabled = this.labelParser.ParseEnabled(labels);
-
-      if (!enabled) {
+      if (!containerLabels.Enabled) {
         this.logger.LogInformation("Container {ContainerId} is not enabled", container.Id);
         this.meterProvider?.RecordDockerMiss();
         continue;
@@ -77,140 +92,235 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
       this.meterProvider?.RecordDockerHit();
 
-      var containerRoutes = this.ParseRouterConfigs(container, labels);
+      var clusterId = GetContainerName(container);
+      var cluster = this.CreateClusterConfig(container, clusterId, containerLabels);
 
-      YRC.ClusterConfig cluster;
-
-      var schema = this.labelParser.ParseSchema(labels);
-
-      if (schema == "http" || schema == "https") {
-        var customHost = this.labelParser.ParseCustomHost(labels);
-        var host = customHost switch {
-          null or "" => this.labelParser.ParseHost(container),
-          _ => customHost,
-        };
-
-        if (string.IsNullOrEmpty(host)) {
-          this.logger.LogInformation("No valid host found for {Name}", container.Names.AsValueEnumerable().FirstOrDefault());
-          continue;
-        }
-
-        var port = this.labelParser.ParsePort(labels);
-
-        var address = $"{schema}://{host}:{port}";
-
-        cluster = new YRC.ClusterConfig {
-          ClusterId = container.Names[0],
-          Destinations = new Dictionary<string, YRC.DestinationConfig>(1) {
-            {
-              container.Names[0],
-              new () {
-                Address = address,
-              }
-            }
-          },
-        };
-      } else if (schema == "unix") {
-        var socketPath = this.labelParser.ParseSocketPath(labels);
-
-        var host = this.labelParser.ParseCustomHost(labels) ?? "localhost";
-        var address = $"http://{host}";
-
-        cluster = new YRC.ClusterConfig {
-          ClusterId = container.Names[0],
-          Destinations = new Dictionary<string, YRC.DestinationConfig>(1) {
-            {
-              container.Names[0],
-              new () {
-                Address = address,
-              }
-            },
-          },
-          Metadata = new Dictionary<string, string>(1) {
-            { UnixSocket, socketPath },
-          },
-        };
-
-        if (logger.IsEnabled(LogLevel.Debug)) {
-          logger.LogDebug("Adding Unix Socket {SocketPath} for {ClusterId} with {Address}", socketPath, container.Names[0], address);
-        }
-      } else {
-        logger.LogWarning("Unknown schema {Schema}", schema);
+      if (cluster is null) {
         continue;
       }
 
       clusters.Add(cluster);
 
-      foreach (var route in containerRoutes) {
-        logger.LogDebug("Adding routing for {RouteId} -> {ClusterId}", route.RouteId, route.ClusterId);
+      foreach (var route in CreateRouteConfigs(clusterId, containerLabels.Routes)) {
+        this.logger.LogDebug("Adding routing for {RouteId} -> {ClusterId}", route.RouteId, route.ClusterId);
         routes.Add(route);
       }
     }
 
-    return new(new DockerProxyConfig(routes, clusters, this.source.Token));
+    return new(new DockerProxyConfig(routes, clusters, changeToken));
   }
 
-  public List<YRC.RouteConfig> ParseRouterConfigs(ListContainerResponse container, Label[] labels) {
-    var parsedLabels = this.labelParser.ParseRouteConfigs(labels);
+  private YRC.ClusterConfig? CreateClusterConfig(
+    ListContainerResponse container,
+    string clusterId,
+    ContainerLabels containerLabels) {
+    if (containerLabels.Schema == "http" || containerLabels.Schema == "https") {
+      var host = containerLabels.CustomHost switch {
+        null or "" => this.labelParser.ParseHost(container),
+        _ => containerLabels.CustomHost,
+      };
 
-    var clusterId = container.Names[0];
+      if (string.IsNullOrEmpty(host)) {
+        this.logger.LogInformation("No valid host found for {Name}", clusterId);
+        return null;
+      }
 
-    List<YRC.RouteConfig> routes = [.. parsedLabels
-      .Select(kvp => {
-        var c = kvp.Value;
+      var address = $"{containerLabels.Schema}://{host}:{containerLabels.Port}";
 
-        var config = new YRC.RouteConfig {
-          RouteId = kvp.Key,
-          Match = new YRC.RouteMatch {
-            Hosts = c.Match.Hosts,
-            Path = c.Match.Path,
+      return new YRC.ClusterConfig {
+        ClusterId = clusterId,
+        Destinations = new Dictionary<string, YRC.DestinationConfig>(1) {
+          {
+            clusterId,
+            new() {
+              Address = address,
+            }
+          }
+        },
+      };
+    }
+
+    if (containerLabels.Schema == "unix") {
+      var host = containerLabels.CustomHost ?? "localhost";
+      var address = $"http://{host}";
+
+      if (this.logger.IsEnabled(LogLevel.Debug)) {
+        this.logger.LogDebug("Adding Unix Socket {SocketPath} for {ClusterId} with {Address}", containerLabels.SocketPath, clusterId, address);
+      }
+
+      return new YRC.ClusterConfig {
+        ClusterId = clusterId,
+        Destinations = new Dictionary<string, YRC.DestinationConfig>(1) {
+          {
+            clusterId,
+            new() {
+              Address = address,
+            }
           },
-          ClusterId = clusterId,
-        };
+        },
+        Metadata = new Dictionary<string, string>(1) {
+          { UnixSocket, containerLabels.SocketPath },
+        },
+      };
+    }
 
-        return config.WithTransformUseOriginalHostHeader(useOriginal: true);
-      })];
+    this.logger.LogWarning("Unknown schema {Schema}", containerLabels.Schema);
+    return null;
+  }
+
+  private ContainerLabels ParseContainerLabels(Label[] labels) {
+    var routes = new DefaultDictionary<string, RouteConfig>(capacity: labels.Length);
+    var enabled = false;
+    var schema = XiangyaoConstants.Http;
+    var port = XiangyaoConstants.HttpPort;
+    string? customHost = null;
+    var socketPath = string.Empty;
+
+    foreach (var label in labels) {
+      if (!label.Name.StartsWith(XiangyaoConstants.LabelKeyPrefix, StringComparison.OrdinalIgnoreCase)) {
+        continue;
+      }
+
+      if (string.Equals(label.Name, XiangyaoConstants.EnableLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        enabled = string.Equals(label.Value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+        continue;
+      }
+
+      if (string.Equals(label.Name, XiangyaoConstants.SchemaLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        schema = string.IsNullOrEmpty(label.Value)
+          ? XiangyaoConstants.Http
+          : label.Value;
+        continue;
+      }
+
+      if (string.Equals(label.Name, XiangyaoConstants.HostLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        customHost = label.Value;
+        continue;
+      }
+
+      if (string.Equals(label.Name, XiangyaoConstants.PortLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        port = int.TryParse(label.Value, out var parsedPort)
+          ? parsedPort
+          : XiangyaoConstants.HttpPort;
+        continue;
+      }
+
+      if (string.Equals(label.Name, XiangyaoConstants.UnixSocketPathLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        socketPath = label.Value ?? string.Empty;
+        continue;
+      }
+
+      if (!label.Name.StartsWith(XiangyaoConstants.RoutesLabelKeyPrefix, StringComparison.OrdinalIgnoreCase)) {
+        continue;
+      }
+
+      _ = this.labelParser.Parse(label, routes);
+    }
+
+    return new(
+      Enabled: enabled,
+      Schema: schema,
+      Port: port,
+      CustomHost: customHost,
+      SocketPath: socketPath,
+      Routes: routes.ToDictionary());
+  }
+
+  private static List<YRC.RouteConfig> CreateRouteConfigs(
+    string clusterId,
+    IReadOnlyDictionary<string, RouteConfig> parsedLabels) {
+    var routes = new List<YRC.RouteConfig>(parsedLabels.Count);
+
+    foreach (var routeEntry in parsedLabels) {
+      var route = routeEntry.Value;
+      var config = new YRC.RouteConfig {
+        RouteId = routeEntry.Key,
+        Match = new YRC.RouteMatch {
+          Hosts = route.Match.Hosts,
+          Path = route.Match.Path,
+        },
+        ClusterId = clusterId,
+      };
+
+      routes.Add(config.WithTransformUseOriginalHostHeader(useOriginal: true));
+    }
 
     return routes;
   }
 
-  public IProxyConfig GetConfig() {
-    logger.LogDebug(nameof(GetConfig));
+  private static string GetContainerName(ListContainerResponse container) {
+    if (container.Names.Length > 0) {
+      return container.Names[0];
+    }
 
-    this.config = this.GetXiangyaoProxyConfigAsync().Result;
-    var config = this.config.ProxyConfig;
+    return container.Id;
+  }
 
-    logger.LogInformation("Current Config: {Routes} Routes, {Clusters} Clusters", config.Routes.Count, config.Clusters.Count);
+  private void UpdateAcmeDomains(XiangyaoProxyConfig newConfig) {
+    var addressSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-    return config;
+    foreach (var route in newConfig.ProxyConfig.Routes) {
+      if (route.Match.Hosts is null) {
+        continue;
+      }
+
+      foreach (var host in route.Match.Hosts) {
+        addressSet.Add(host);
+      }
+    }
+
+    if (addressSet.Count > 0) {
+      var addresses = addressSet.ToArray();
+      this.acmeDomainProvider.SetDomainNames(addresses);
+
+      if (this.logger.IsEnabled(LogLevel.Debug)) {
+        this.logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
+        this.logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
+      }
+    } else {
+      this.logger.LogInformation("No addresses found in new configuration");
+    }
+  }
+
+  private async ValueTask RefreshConfigAsync(bool forceRefresh = true) {
+    await this.refreshLock.WaitAsync();
+
+    try {
+      if (!forceRefresh && this.hasLoadedConfig) {
+        return;
+      }
+
+      var nextSource = new CancellationTokenSource();
+      XiangyaoProxyConfig nextConfig;
+
+      try {
+        nextConfig = await this.BuildXiangyaoProxyConfigAsync(nextSource.Token);
+      } catch {
+        nextSource.Dispose();
+        throw;
+      }
+
+      Interlocked.Exchange(ref this.config, nextConfig);
+      var previousSource = Interlocked.Exchange(ref this.source, nextSource);
+      this.hasLoadedConfig = true;
+
+      this.UpdateAcmeDomains(nextConfig);
+      previousSource.Cancel();
+    }
+    finally {
+      this.refreshLock.Release();
+    }
   }
 
   private async ValueTask UpdateImplAsync() {
-    var newConfig = await this.GetXiangyaoProxyConfigAsync();
-
-    Interlocked.Exchange(ref this.config, newConfig);
-
-    string[] addresses = [.. newConfig.ProxyConfig.Routes.SelectMany(e => e.Match.Hosts ?? []).Distinct()];
-
-    if (addresses.Length > 0) {
-      this.acmeDomainProvider.SetDomainNames(addresses);
-
-      if (logger.IsEnabled(LogLevel.Debug)) {
-        logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
-        logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
-      }
-    } else {
-      logger.LogInformation("No addresses found in new configuration");
-    }
-
-    var source = Interlocked.Exchange(ref this.source, new CancellationTokenSource());
-
-    source.Cancel();
+    await this.RefreshConfigAsync();
   }
 
-  public void Update() {
-    logger.LogDebug(nameof(Update));
-
-    this.Notifier.Notify();
-  }
+  private readonly record struct ContainerLabels(
+    bool Enabled,
+    string Schema,
+    int Port,
+    string? CustomHost,
+    string SocketPath,
+    IReadOnlyDictionary<string, RouteConfig> Routes);
 }

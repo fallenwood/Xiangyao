@@ -1,13 +1,16 @@
 namespace Xiangyao;
 
 using Xiangyao.Docker;
-using ZLinq;
 
 internal interface ILabelParser {
   public IReadOnlyDictionary<string, RouteConfig> ParseRouteConfigs(Label[] labels) {
     var dict = new DefaultDictionary<string, RouteConfig>(capacity: labels.Length);
 
     foreach (var label in labels) {
+      if (!label.Name.StartsWith(XiangyaoConstants.RoutesLabelKeyPrefix, StringComparison.OrdinalIgnoreCase)) {
+        continue;
+      }
+
       _ = this.Parse(label, dict);
     }
 
@@ -15,54 +18,63 @@ internal interface ILabelParser {
   }
 
   public bool ParseEnabled(Label[] labels) {
-    var enabled = labels
-      .AsValueEnumerable()
-      .FirstOrDefault(e =>
-        string.Equals(e.Name, XiangyaoConstants.EnableLabelKey, StringComparison.OrdinalIgnoreCase))
-        ?.Value;
-
-    if (string.IsNullOrEmpty(enabled)
-      || !string.Equals(enabled, bool.TrueString, StringComparison.OrdinalIgnoreCase)) {
-      return false;
+    foreach (var label in labels) {
+      if (string.Equals(label.Name, XiangyaoConstants.EnableLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        return string.Equals(label.Value, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+      }
     }
 
-    return true;
+    return false;
   }
 
   public string ParseHost(ListContainerResponse container) {
-    var fisrtNetwork = container.NetworkSettings?.AsValueEnumerable().FirstOrDefault();
-    var host = fisrtNetwork?.IPAddress;
+    if (container.NetworkSettings.Length == 0) {
+      return string.Empty;
+    }
 
-    return host ?? string.Empty;
+    return container.NetworkSettings[0].IPAddress ?? string.Empty;
   }
 
   public string ParseSchema(Label[] labels) {
-    var schema = labels.AsValueEnumerable().FirstOrDefault(e => e.Name == XiangyaoConstants.SchemaLabelKey)?.Value;
-
-    if (string.IsNullOrEmpty(schema)) {
-      schema = XiangyaoConstants.Http;
+    foreach (var label in labels) {
+      if (string.Equals(label.Name, XiangyaoConstants.SchemaLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        return string.IsNullOrEmpty(label.Value) ? XiangyaoConstants.Http : label.Value;
+      }
     }
 
-    return schema;
+    return XiangyaoConstants.Http;
   }
 
   public string? ParseCustomHost(Label[] labels) {
-    var host = labels.AsValueEnumerable().FirstOrDefault(e => e.Name == XiangyaoConstants.HostLabelKey)?.Value;
-    return host;
+    foreach (var label in labels) {
+      if (string.Equals(label.Name, XiangyaoConstants.HostLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        return label.Value;
+      }
+    }
+
+    return null;
   }
 
   public int ParsePort(Label[] labels) {
-    var portString = labels.AsValueEnumerable().FirstOrDefault(e => e.Name == XiangyaoConstants.PortLabelKey)?.Value;
-    if (string.IsNullOrEmpty(portString) || !int.TryParse(portString, out var port)) {
-      return XiangyaoConstants.HttpPort;
+    foreach (var label in labels) {
+      if (string.Equals(label.Name, XiangyaoConstants.PortLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        return int.TryParse(label.Value, out var port)
+          ? port
+          : XiangyaoConstants.HttpPort;
+      }
     }
 
-    return port;
+    return XiangyaoConstants.HttpPort;
   }
 
   public string ParseSocketPath(Label[] labels) {
-    var path = labels.AsValueEnumerable().FirstOrDefault(e => e.Name == XiangyaoConstants.UnixSocketPathLabelKey)?.Value;
-    return path ?? string.Empty;
+    foreach (var label in labels) {
+      if (string.Equals(label.Name, XiangyaoConstants.UnixSocketPathLabelKey, StringComparison.OrdinalIgnoreCase)) {
+        return label.Value ?? string.Empty;
+      }
+    }
+
+    return string.Empty;
   }
 
   public bool Parse(Label label, DefaultDictionary<string, RouteConfig> parsedLabels);

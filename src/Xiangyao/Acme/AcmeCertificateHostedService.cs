@@ -1,11 +1,13 @@
 namespace Xiangyao;
 
+using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using Xiangyao.Acme;
 
 internal sealed class AcmeCertificateHostedService(
   IAcmeDomainProvider domainProvider,
   IHttp01ChallengeStore challengeStore,
+  IHttpClientFactory httpClientFactory,
   string email,
   string certificateDirectory,
   ILogger<AcmeCertificateHostedService> logger) : BackgroundService {
@@ -37,7 +39,7 @@ internal sealed class AcmeCertificateHostedService(
   }
 
   private async Task ObtainCertificateAsync(string[] domains, CancellationToken cancellationToken) {
-    using var client = new AcmeClient();
+    using var client = new AcmeClient(httpClientFactory.CreateClient());
 
     var options = new AcmeCertificateManagerOptions {
       PreferredChallengeType = ChallengeType.Http01,

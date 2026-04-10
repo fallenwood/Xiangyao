@@ -101,12 +101,14 @@ public static partial class Program {
 
         var certificateDirectory = Path.Join(Directory.GetCurrentDirectory(), "letsencrypt");
 
+        builder.Services.AddHttpClient();
         builder.Services.AddAcmeHttp01Challenge();
 
         builder.Services.AddSingleton<AcmeCertificateHostedService>(sp =>
           new AcmeCertificateHostedService(
             sp.GetRequiredService<IAcmeDomainProvider>(),
             sp.GetRequiredService<IHttp01ChallengeStore>(),
+            sp.GetRequiredService<IHttpClientFactory>(),
             options.LetsEncryptEmailAddress,
             certificateDirectory,
             sp.GetRequiredService<ILogger<AcmeCertificateHostedService>>()));
@@ -114,11 +116,11 @@ public static partial class Program {
         builder.Services.AddHostedService(sp => sp.GetRequiredService<AcmeCertificateHostedService>());
 
         builder.WebHost.UseKestrel(kestrel => {
+          AcmeCertificateHostedService? certificateService = null;
+
           kestrel.ConfigureHttpsDefaults(h => {
-            h.ServerCertificateSelector = (context, domainName) => {
-              var service = kestrel.ApplicationServices.GetRequiredService<AcmeCertificateHostedService>();
-              return service.Certificate;
-            };
+            certificateService ??= kestrel.ApplicationServices.GetRequiredService<AcmeCertificateHostedService>();
+            h.ServerCertificateSelector = (_, _) => certificateService!.Certificate;
           });
 
           kestrel.ConfigureEndpointDefaults(e => {
