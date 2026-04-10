@@ -1,7 +1,6 @@
 namespace Xiangyao;
 
 using System.Threading;
-using LettuceEncrypt;
 using Xiangyao.Docker;
 using Xiangyao.Telemetry;
 using ZLinq;
@@ -16,7 +15,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   private readonly IDockerProvider dockerProvider;
   private readonly ILogger<DockerProxyConfigProvider> logger;
   private readonly ILabelParser labelParser;
-  private readonly ILettuceEncryptOptionsProvider lettuceEncryptOptionsProvider;
+  private readonly IAcmeDomainProvider acmeDomainProvider;
   private readonly OpenTelemetryMeterProvider? meterProvider;
 
   private CancellationTokenSource source = new();
@@ -26,13 +25,13 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
   public DockerProxyConfigProvider(
         IDockerProvider dockerProvider,
         ILabelParser labelParser,
-        ILettuceEncryptOptionsProvider lettuceEncryptOptionsProvider,
+        IAcmeDomainProvider acmeDomainProvider,
         ILogger<DockerProxyConfigProvider> logger,
         IServiceProvider serviceProvider) {
     this.dockerProvider = dockerProvider;
     this.logger = logger;
     this.labelParser = labelParser;
-    this.lettuceEncryptOptionsProvider = lettuceEncryptOptionsProvider;
+    this.acmeDomainProvider = acmeDomainProvider;
     this.meterProvider = serviceProvider.GetService<OpenTelemetryMeterProvider>();
     this.Notifier = new ChangeNotifier(this.UpdateImplAsync);
 
@@ -194,7 +193,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     string[] addresses = [.. newConfig.ProxyConfig.Routes.SelectMany(e => e.Match.Hosts ?? []).Distinct()];
 
     if (addresses.Length > 0) {
-      this.lettuceEncryptOptionsProvider.SetDomainNames(addresses);
+      this.acmeDomainProvider.SetDomainNames(addresses);
 
       if (logger.IsEnabled(LogLevel.Debug)) {
         logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));

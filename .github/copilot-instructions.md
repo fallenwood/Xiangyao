@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Xiangyao (相繇) is a C# ASP.NET Core reverse proxy that integrates with YARP (Yet Another Reverse Proxy), Docker.NET, and LettuceEncrypt. The project reads Docker API to discover living backends and uses container labels to build dynamic routing tables.
+Xiangyao (相繇) is a C# ASP.NET Core reverse proxy that integrates with YARP (Yet Another Reverse Proxy), Docker.NET, and Xiangyao.Acme. The project reads Docker API to discover living backends and uses container labels to build dynamic routing tables.
 
 ## Development Workflow
 
