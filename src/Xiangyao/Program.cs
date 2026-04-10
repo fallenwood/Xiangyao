@@ -206,12 +206,12 @@ public static partial class Program {
 
     var app = builder.Build();
 
-    if (options.UseHttpsRedirect) {
-      app.UseHttpsRedirection();
-    }
-
     if (options.UseLetsEncrypt) {
       app.UseAcmeHttp01Challenge();
+    }
+
+    if (options.UseHttpsRedirect) {
+      app.UseHttpsRedirection();
     }
 
     app.MapReverseProxy();
