@@ -1,8 +1,11 @@
 namespace Xiangyao.Certificate;
 
-using McMaster.AspNetCore.Kestrel.Certificates;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Connections;
+
+public interface IServerCertificateSelector {
+  X509Certificate2? Select(ConnectionContext context, string? domainName);
+}
 
 public class WildcastServerCertificateSelector(string certificate, string certificateKey)
   : IServerCertificateSelector {
