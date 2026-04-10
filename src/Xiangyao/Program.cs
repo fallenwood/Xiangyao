@@ -1,7 +1,7 @@
 using Xiangyao;
 
 using Yarp.ReverseProxy.Configuration;
-using LettuceEncrypt;
+using Xiangyao.Acme;
 using ConsoleAppFramework;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Logs;
@@ -75,13 +75,11 @@ public static partial class Program {
 
   /// <param
   static async Task MainAsync(Options options) {
-    var provider = new LettuceEncryptOptionsProvider();
+    var domainProvider = new AcmeDomainProvider();
 
     var builder = WebApplication.CreateSlimBuilder([]);
 
-    builder.Configuration.AddLettuceEncryptOptionsProvider(provider);
-
-    builder.Services.AddSingleton<ILettuceEncryptOptionsProvider>(provider);
+    builder.Services.AddSingleton<IAcmeDomainProvider>(domainProvider);
 
     switch (options.Provider) {
       case Provider.None:
@@ -99,21 +97,30 @@ public static partial class Program {
       if (options.UseLetsEncrypt) {
         Console.WriteLine($"Use LetsEncrypt with {options.LetsEncryptEmailAddress} for {string.Join(",", options.LetsEncryptDomainNames)}");
 
-        builder
-          .Services
-          .AddLettuceEncrypt(
-            o => {
-              o.AcceptTermsOfService = true;
-              o.EmailAddress = options.LetsEncryptEmailAddress;
-              o.DomainNames = options.LetsEncryptDomainNames;
-              o.AllowedChallengeTypes = LettuceEncrypt.Acme.ChallengeType.Http01;
-            },
-            builder.Configuration)
-          .PersistDataToDirectory(new(Path.Join(Directory.GetCurrentDirectory(), "letsencrypt")), pfxPassword: null);
+        domainProvider.SetDomainNames(options.LetsEncryptDomainNames);
+
+        var certificateDirectory = Path.Join(Directory.GetCurrentDirectory(), "letsencrypt");
+
+        builder.Services.AddHttpClient();
+        builder.Services.AddAcmeHttp01Challenge();
+
+        builder.Services.AddSingleton<AcmeCertificateHostedService>(sp =>
+          new AcmeCertificateHostedService(
+            sp.GetRequiredService<IAcmeDomainProvider>(),
+            sp.GetRequiredService<IHttp01ChallengeStore>(),
+            sp.GetRequiredService<IHttpClientFactory>(),
+            options.LetsEncryptEmailAddress,
+            certificateDirectory,
+            sp.GetRequiredService<ILogger<AcmeCertificateHostedService>>()));
+
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<AcmeCertificateHostedService>());
 
         builder.WebHost.UseKestrel(kestrel => {
+          AcmeCertificateHostedService? certificateService = null;
+
           kestrel.ConfigureHttpsDefaults(h => {
-            h.UseLettuceEncrypt(kestrel.ApplicationServices);
+            certificateService ??= kestrel.ApplicationServices.GetRequiredService<AcmeCertificateHostedService>();
+            h.ServerCertificateSelector = (_, _) => certificateService!.Certificate;
           });
 
           kestrel.ConfigureEndpointDefaults(e => {
@@ -198,6 +205,10 @@ public static partial class Program {
     });
 
     var app = builder.Build();
+
+    if (options.UseLetsEncrypt) {
+      app.UseAcmeHttp01Challenge();
+    }
 
     if (options.UseHttpsRedirect) {
       app.UseHttpsRedirection();

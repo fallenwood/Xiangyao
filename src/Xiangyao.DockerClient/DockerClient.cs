@@ -22,9 +22,9 @@ public interface IDockerClient {
 
 public class DockerClient(HttpClient httpClient, string baseUrl = "http://localhost") : IDockerClient {
   public async ValueTask<ListContainerResponse[]> ListContainersAsync() {
-    var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/containers/json?all=true");
-    var response = await httpClient.SendAsync(requestMessage);
-    var stream = await response.Content.ReadAsStreamAsync();
+    using var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/containers/json?all=true");
+    using var response = await httpClient.SendAsync(requestMessage);
+    await using var stream = await response.Content.ReadAsStreamAsync();
 
     if (!response.IsSuccessStatusCode) {
       var error = await JsonSerializer.DeserializeAsync(stream, DockerJsonContext.Default.ErrorResponse);
@@ -32,17 +32,44 @@ public class DockerClient(HttpClient httpClient, string baseUrl = "http://localh
     }
 
     var payload = await JsonSerializer.DeserializeAsync(stream, DockerJsonContext.Default.ListContainerDockerResponseArray);
-    
-    return [.. payload?.Select(r => new ListContainerResponse {
-      Id = r.Id,
-      Labels = [.. r.Labels.Select(e => new Label { Name = e.Key, Value = e.Value})],
-      Names = r.Names,
-      NetworkSettings = [.. r.NetworkSettings.Networks.Select(e => new NetworkEntry {
-        Name = e.Key,
-        IPAddress = e.Value.IPAddress,
-        GlobalIPv6Address = e.Value.GlobalIPv6Address,
-      })],
-    }) ?? []];
+    if (payload is null || payload.Length == 0) {
+      return [];
+    }
+
+    var containers = new ListContainerResponse[payload.Length];
+
+    for (var containerIndex = 0; containerIndex < payload.Length; containerIndex++) {
+      var sourceContainer = payload[containerIndex];
+      var labels = new Label[sourceContainer.Labels.Count];
+      var labelIndex = 0;
+
+      foreach (var label in sourceContainer.Labels) {
+        labels[labelIndex++] = new Label {
+          Name = label.Key,
+          Value = label.Value,
+        };
+      }
+
+      var networkSettings = new NetworkEntry[sourceContainer.NetworkSettings.Networks.Count];
+      var networkIndex = 0;
+
+      foreach (var network in sourceContainer.NetworkSettings.Networks) {
+        networkSettings[networkIndex++] = new NetworkEntry {
+          Name = network.Key,
+          IPAddress = network.Value.IPAddress,
+          GlobalIPv6Address = network.Value.GlobalIPv6Address,
+        };
+      }
+
+      containers[containerIndex] = new ListContainerResponse {
+        Id = sourceContainer.Id,
+        Labels = labels,
+        Names = sourceContainer.Names,
+        NetworkSettings = networkSettings,
+      };
+    }
+
+    return containers;
   }
 
   public async Task MonitorEventsAsync(

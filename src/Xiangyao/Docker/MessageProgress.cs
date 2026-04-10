@@ -9,9 +9,8 @@ public class MessageProgress(IUpdateConfig updateConfig, ILogger logger) : IProg
   public void Report(MonitorEvent message) {
     logger.LogDebug("New Message {Id} {Action}", message.Id, message.Action);
 
-    if (message.Action == "start"
-      || message.Action == "die"
-      || message.Action.StartsWith("health_status")) {
+    if (string.Equals(message.Action, "start", StringComparison.Ordinal)
+      || string.Equals(message.Action, "die", StringComparison.Ordinal)) {
       updateConfig.Update();
     }
   }

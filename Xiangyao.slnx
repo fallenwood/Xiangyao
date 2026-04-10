@@ -4,6 +4,7 @@
     <Project Path="tests/Xiangyao.UnitTests/Xiangyao.UnitTests.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Xiangyao.Acme/Xiangyao.Acme.csproj" />
     <Project Path="src/Xiangyao.Portal/Xiangyao.Portal.csproj" />
     <Project Path="src/Xiangyao.Telemetry/Xiangyao.Telemetry.csproj" />
     <Project Path="src/Xiangyao.Common/Xiangyao.Common.csproj" />
