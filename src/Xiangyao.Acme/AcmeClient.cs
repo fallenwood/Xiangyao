@@ -1,5 +1,6 @@
 namespace Xiangyao.Acme;
 
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
@@ -148,7 +149,8 @@ public class AcmeClient : IDisposable {
 
     var jws = CreateJws(url, payload, useKid);
 
-    var content = new StringContent(JsonSerializer.Serialize(jws, AcmeJsonContext.Default.AcmeJwsEnvelope), Encoding.UTF8, "application/jose+json");
+    var content = new StringContent(JsonSerializer.Serialize(jws, AcmeJsonContext.Default.AcmeJwsEnvelope), Encoding.UTF8);
+    content.Headers.ContentType = new MediaTypeHeaderValue("application/jose+json");
     var response = await _httpClient.PostAsync(url, content, cancellationToken);
 
     if (response.Headers.TryGetValues("Replay-Nonce", out var nonces)) {
