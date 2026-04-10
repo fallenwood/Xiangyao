@@ -137,7 +137,8 @@ public static partial class Program {
 
         builder.WebHost.UseKestrel(kestrel => {
           kestrel.ConfigureHttpsDefaults(h => {
-            h.UseServerCertificateSelector(certificateSelector);
+            h.ServerCertificateSelector = (context, domainName) =>
+              certificateSelector.Select(context!, domainName);
           });
 
           kestrel.ConfigureEndpointDefaults(e => {

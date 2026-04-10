@@ -12,7 +12,6 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
-    <PackageReference Include="Fallenwood.McMaster.AspNetCore.Kestrel.Certificates" />
     <PackageReference Include="BouncyCastle.Cryptography" />
     <PackageReference Include="ZLinq" />
     <PackageReference Include="ZstdSharp.Port" />
