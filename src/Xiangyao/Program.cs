@@ -18,8 +18,9 @@ public static partial class Program {
 
   const string ServiceName = "XiangyaoProxy";
 
-  public static async Task Main(string[] args) {
-    await ConsoleApp.RunAsync(args, PreMainAsync);
+  public static void Main(string[] args) {
+    ThreadPool.SetMinThreads(workerThreads: Environment.ProcessorCount * 30, completionPortThreads: 0);
+    ConsoleApp.RunAsync(args, PreMainAsync).GetAwaiter().GetResult();
   }
 
   /// <summary>

@@ -22,6 +22,8 @@ ENV ASPNETCORE_URLS=http://+:80
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_gcServer=1
 
+ENV DOTNET_RuntimeAsync=1
+
 USER root
 
 ENTRYPOINT ["./Xiangyao"]
