@@ -111,12 +111,14 @@ public class AcmeClient : IDisposable {
       useKid: true,
       cancellationToken: cancellationToken);
     var order = await response.Content.ReadFromJsonAsync(AcmeJsonContext.Default.AcmeOrder, cancellationToken);
+    if (order != null) {
+      order.OrderUrl = response.Headers.Location?.ToString();
+    }
     return order ?? throw new AcmeException("Failed to finalize order");
   }
 
   public async Task<AcmeOrder> GetOrderAsync(string orderUrl, CancellationToken cancellationToken = default) {
-    var response = await _httpClient.GetAsync(orderUrl, cancellationToken);
-    response.EnsureSuccessStatusCode();
+    var response = await SendSignedRequestAsync(orderUrl, string.Empty, useKid: true, cancellationToken: cancellationToken);
     var order = await response.Content.ReadFromJsonAsync(AcmeJsonContext.Default.AcmeOrder, cancellationToken);
     return order ?? throw new AcmeException("Failed to get order");
   }
@@ -170,7 +172,8 @@ public class AcmeClient : IDisposable {
       throw new InvalidOperationException("Directory not initialized");
     }
 
-    var response = await _httpClient.GetAsync(_directory.NewNonce, cancellationToken);
+    var request = new HttpRequestMessage(HttpMethod.Head, _directory.NewNonce);
+    var response = await _httpClient.SendAsync(request, cancellationToken);
     if (response.Headers.TryGetValues("Replay-Nonce", out var nonces)) {
       _nonce = nonces.FirstOrDefault();
     }
