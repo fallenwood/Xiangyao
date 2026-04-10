@@ -52,7 +52,7 @@ public class AcmeCertificateManagerV2 {
 
     foreach (var authzUrl in order.Authorizations) {
       var authz = await _client.GetAuthorizationAsync(authzUrl, cancellationToken);
-      await ProcessAuthorizationAsync(authz, cancellationToken);
+      await ProcessAuthorizationAsync(authzUrl, authz, cancellationToken);
     }
 
     var certKeyPair = GenerateRsaKeyPair();
@@ -74,7 +74,7 @@ public class AcmeCertificateManagerV2 {
     return ConvertToPfx(certificatePem, certKeyPair, domainNames[0]);
   }
 
-  private async Task ProcessAuthorizationAsync(AcmeAuthorization authz, CancellationToken cancellationToken) {
+  private async Task ProcessAuthorizationAsync(string authzUrl, AcmeAuthorization authz, CancellationToken cancellationToken) {
     AcmeChallenge? challenge = null;
     string? challengeType = null;
 
@@ -118,9 +118,7 @@ public class AcmeCertificateManagerV2 {
 
     await _client.CompleteChallengeAsync(challenge.Url, cancellationToken);
 
-    var authzUrl = authz.Challenges.First().Url;
-    var baseUrl = authzUrl.Substring(0, authzUrl.LastIndexOf('/'));
-    await WaitForAuthorizationAsync(baseUrl, cancellationToken);
+    await WaitForAuthorizationAsync(authzUrl, cancellationToken);
 
     await CleanupChallengeAsync(authz.Identifier.Value, challengeType!, cancellationToken);
   }
