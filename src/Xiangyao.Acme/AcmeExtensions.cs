@@ -1,9 +1,9 @@
+namespace Xiangyao.Acme;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
-
-namespace Xiangyao.Acme;
 
 public static class AcmeExtensions {
   public static IServiceCollection AddAcmeHttp01Challenge(this IServiceCollection services) {

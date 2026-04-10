@@ -1,6 +1,7 @@
-using System.Net.Http.Json;
-
 namespace Xiangyao.Acme.DnsProviders;
+
+using System.Net.Http.Json;
+using System.Text.Json;
 
 /// <summary>
 /// Manual DNS provider for testing - requires manual DNS record creation
@@ -12,7 +13,7 @@ public class ManualDnsProvider : IDnsProvider {
     Console.WriteLine($"  Value: {value}");
     Console.WriteLine();
     Console.WriteLine("Press ENTER after you have created the record and it has propagated...");
-    
+
     await Task.Run(() => Console.ReadLine(), cancellationToken);
   }
 
@@ -41,40 +42,36 @@ public class CloudflareDnsProvider : IDnsProvider {
 
   public async Task CreateTxtRecordAsync(string domain, string name, string value, CancellationToken cancellationToken = default) {
     var recordName = $"{name}.{domain}";
-    var payload = new {
-      type = "TXT",
-      name = recordName,
-      content = value,
-      ttl = 120
-    };
+    var payload = new CloudflareCreateDnsRecordPayload(
+      Type: "TXT",
+      Name: recordName,
+      Content: value,
+      Ttl: 120);
 
-    var response = await _httpClient.PostAsJsonAsync(
+    var response = await _httpClient.PostAsync(
       $"zones/{_zoneId}/dns_records",
-      payload,
+      JsonContent.Create(payload, AcmeJsonContext.Default.CloudflareCreateDnsRecordPayload),
       cancellationToken);
-    
+
     response.EnsureSuccessStatusCode();
   }
 
   public async Task DeleteTxtRecordAsync(string domain, string name, CancellationToken cancellationToken = default) {
     var recordName = $"{name}.{domain}";
-    
+
     // First, find the record ID
     var listResponse = await _httpClient.GetAsync(
       $"zones/{_zoneId}/dns_records?type=TXT&name={recordName}",
       cancellationToken);
-    
+
     listResponse.EnsureSuccessStatusCode();
-    var listResult = await listResponse.Content.ReadFromJsonAsync<CloudflareListResponse>(cancellationToken);
-    
+    var listResult = await listResponse.Content.ReadFromJsonAsync(AcmeJsonContext.Default.CloudflareListResponse, cancellationToken);
+
     if (listResult?.Result != null && listResult.Result.Length > 0) {
       var recordId = listResult.Result[0].Id;
       await _httpClient.DeleteAsync($"zones/{_zoneId}/dns_records/{recordId}", cancellationToken);
     }
   }
-
-  private record CloudflareListResponse(CloudflareDnsRecord[] Result);
-  private record CloudflareDnsRecord(string Id, string Name, string Content);
 }
 
 /// <summary>
@@ -110,7 +107,7 @@ public class Route53DnsProvider : IDnsProvider {
     //   }
     // };
     // await client.ChangeResourceRecordSetsAsync(request, cancellationToken);
-    
+
     await Task.CompletedTask;
     throw new NotImplementedException("AWS Route53 provider requires AWS SDK. This is a reference implementation.");
   }
@@ -152,7 +149,7 @@ public class AzureDnsProvider : IDnsProvider {
     //   RecordType.TXT,
     //   recordSet,
     //   cancellationToken);
-    
+
     throw new NotImplementedException("Azure DNS provider requires Azure SDK. This is a reference implementation.");
   }
 

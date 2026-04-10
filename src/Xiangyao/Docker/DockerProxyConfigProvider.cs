@@ -275,7 +275,10 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
       if (this.logger.IsEnabled(LogLevel.Debug)) {
         this.logger.LogDebug("New Addresses {hosts}", string.Join(",", addresses));
-        this.logger.LogDebug("New Configuration {Configuration}", System.Text.Json.JsonSerializer.Serialize(this.config));
+        this.logger.LogDebug(
+          "New Configuration Routes={RouteCount} Clusters={ClusterCount}",
+          newConfig.ProxyConfig.Routes.Count,
+          newConfig.ProxyConfig.Clusters.Count);
       }
     } else {
       this.logger.LogInformation("No addresses found in new configuration");

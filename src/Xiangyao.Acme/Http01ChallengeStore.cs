@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
-
 namespace Xiangyao.Acme;
+
+using System.Collections.Concurrent;
 
 public interface IHttp01ChallengeStore {
   void AddChallenge(string token, string keyAuthorization);

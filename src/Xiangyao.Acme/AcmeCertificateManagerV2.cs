@@ -1,3 +1,5 @@
+namespace Xiangyao.Acme;
+
 using System.Net.Http.Json;
 using System.Security.Cryptography.X509Certificates;
 using Org.BouncyCastle.Crypto;
@@ -6,7 +8,6 @@ using Org.BouncyCastle.Pkcs;
 using BcX509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using BcX509CertificateParser = Org.BouncyCastle.X509.X509CertificateParser;
 
-namespace Xiangyao.Acme;
 
 public interface IDnsProvider {
   Task CreateTxtRecordAsync(string domain, string name, string value, CancellationToken cancellationToken = default);
@@ -36,7 +37,7 @@ public class AcmeCertificateManagerV2 {
     _email = email;
     _certificateDirectory = certificateDirectory;
     _options = options;
-    
+
     Directory.CreateDirectory(_certificateDirectory);
   }
 
@@ -44,11 +45,11 @@ public class AcmeCertificateManagerV2 {
     string[] domainNames,
     CancellationToken cancellationToken = default) {
     await _client.InitializeAsync(cancellationToken);
-    
+
     await _client.CreateAccountAsync([_email], termsOfServiceAgreed: true, cancellationToken);
-    
+
     var order = await _client.CreateOrderAsync(domainNames, cancellationToken);
-    
+
     foreach (var authzUrl in order.Authorizations) {
       var authz = await _client.GetAuthorizationAsync(authzUrl, cancellationToken);
       await ProcessAuthorizationAsync(authz, cancellationToken);
@@ -56,9 +57,9 @@ public class AcmeCertificateManagerV2 {
 
     var certKeyPair = GenerateRsaKeyPair();
     var finalizedOrder = await _client.FinalizeOrderAsync(order.Finalize, certKeyPair, domainNames, cancellationToken);
-    
+
     await WaitForCertificateAsync(finalizedOrder.OrderUrl!, cancellationToken);
-    
+
     if (finalizedOrder.Certificate == null) {
       var updatedOrder = await GetOrderAsync(finalizedOrder.OrderUrl!, cancellationToken);
       finalizedOrder = finalizedOrder with { Certificate = updatedOrder.Certificate };
@@ -69,7 +70,7 @@ public class AcmeCertificateManagerV2 {
     }
 
     var certificatePem = await _client.DownloadCertificateAsync(finalizedOrder.Certificate, cancellationToken);
-    
+
     return ConvertToPfx(certificatePem, certKeyPair, domainNames[0]);
   }
 
@@ -189,18 +190,18 @@ public class AcmeCertificateManagerV2 {
     for (int i = 0; i < 30; i++) {
       await Task.Delay(2000, cancellationToken);
       var authz = await _client.GetAuthorizationAsync(authzUrl, cancellationToken);
-      
+
       if (authz.Status == "valid") {
         return;
       }
-      
+
       if (authz.Status == "invalid") {
         var failedChallenge = authz.Challenges.FirstOrDefault(c => c.Error != null);
         var errorMsg = failedChallenge?.Error?.Detail ?? "Unknown error";
         throw new AcmeException($"Authorization failed: {errorMsg}");
       }
     }
-    
+
     throw new AcmeException("Authorization timed out");
   }
 
@@ -208,16 +209,16 @@ public class AcmeCertificateManagerV2 {
     for (int i = 0; i < 30; i++) {
       await Task.Delay(2000, cancellationToken);
       var order = await GetOrderAsync(orderUrl, cancellationToken);
-      
+
       if (order.Status == "valid" && order.Certificate != null) {
         return;
       }
-      
+
       if (order.Status == "invalid") {
         throw new AcmeException("Order became invalid");
       }
     }
-    
+
     throw new AcmeException("Certificate issuance timed out");
   }
 
@@ -234,11 +235,11 @@ public class AcmeCertificateManagerV2 {
   private X509Certificate2 ConvertToPfx(string certificatePem, AsymmetricCipherKeyPair keyPair, string friendlyName) {
     var certParser = new BcX509CertificateParser();
     var certificates = certParser.ReadCertificates(System.Text.Encoding.UTF8.GetBytes(certificatePem));
-    
+
     var store = new Pkcs12StoreBuilder().Build();
     var certEntry = new X509CertificateEntry((BcX509Certificate)certificates[0]!);
     store.SetCertificateEntry(friendlyName, certEntry);
-    
+
     var keyEntry = new AsymmetricKeyEntry(keyPair.Private);
     store.SetKeyEntry(friendlyName, keyEntry, [certEntry]);
 
@@ -255,7 +256,7 @@ public class AcmeCertificateManagerV2 {
     var pfxPath = Path.Combine(_certificateDirectory, $"{filename}.pfx");
     var pfxBytes = certificate.Export(X509ContentType.Pfx, "");
     File.WriteAllBytes(pfxPath, pfxBytes);
-    
+
     var pemPath = Path.Combine(_certificateDirectory, $"{filename}.pem");
     var pemBytes = System.Text.Encoding.UTF8.GetBytes(certificate.ExportCertificatePem());
     File.WriteAllBytes(pemPath, pemBytes);
