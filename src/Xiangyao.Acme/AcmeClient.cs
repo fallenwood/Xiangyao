@@ -6,6 +6,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
@@ -234,12 +237,24 @@ public class AcmeClient : IDisposable {
   }
 
   private static byte[] GenerateCsr(AsymmetricCipherKeyPair keyPair, string[] domainNames) {
-    var subject = new Org.BouncyCastle.Asn1.X509.X509Name($"CN={domainNames[0]}");
+    var subject = new X509Name($"CN={domainNames[0]}");
+
+    var sanNames = domainNames.Select(d => new GeneralName(GeneralName.DnsName, d)).ToArray();
+    var extensionsGenerator = new X509ExtensionsGenerator();
+    extensionsGenerator.AddExtension(
+      X509Extensions.SubjectAlternativeName,
+      critical: false,
+      new GeneralNames(sanNames));
+
+    var attributes = new DerSet(
+      new AttributePkcs(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest,
+        new DerSet(extensionsGenerator.Generate())));
+
     var pkcs10 = new Org.BouncyCastle.Pkcs.Pkcs10CertificationRequest(
       "SHA256withRSA",
       subject,
       keyPair.Public,
-      null,
+      attributes,
       keyPair.Private);
 
     return pkcs10.GetEncoded();
