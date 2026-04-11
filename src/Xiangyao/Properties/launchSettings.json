@@ -6,6 +6,7 @@
       // "commandLineArgs": "--https",
       // "commandLineArgs": "--https --provider None --certificate=../../certs/fullchain.pem --certificate-key=../../certs/privkey.pem",
       // "commandLineArgs": "--provider Docker --use-otel --otel-trace-endpoint=http://192.168.1.128:4317 --otel-meter-endpoint=http://192.168.1.128:4317 --otel-log-endpoint=http://192.168.1.128:4317",
+      // OTLP gRPC collector endpoint uses port 4317 by default.
       "commandLineArgs": "--provider Docker",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

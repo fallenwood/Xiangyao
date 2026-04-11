@@ -3,6 +3,7 @@ using Xiangyao;
 using Yarp.ReverseProxy.Configuration;
 using Xiangyao.Acme;
 using ConsoleAppFramework;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -149,7 +150,7 @@ public static partial class Program {
     }
 
     if (options.UseOtel) {
-      Console.WriteLine($"Enabled Opentelemetry, trace:{options.OtelTraceEndpoint}, logs:{options.OtelLogEndpoint}, meter:{options.OtelMeterEndpoint}");
+      Console.WriteLine($"Enabled Opentelemetry over OTLP/gRPC, trace:{options.OtelTraceEndpoint}, logs:{options.OtelLogEndpoint}, meter:{options.OtelMeterEndpoint}");
 
       builder.Logging.AddOpenTelemetry(logging => {
         logging
@@ -159,7 +160,7 @@ public static partial class Program {
 
         if (!string.IsNullOrEmpty(options.OtelLogEndpoint)) {
           logging.AddOtlpExporter(exporter => {
-            exporter.Endpoint = new(options.OtelLogEndpoint);
+            ConfigureOtlpGrpcExporter(exporter, options.OtelLogEndpoint);
           });
         }
       });
@@ -176,7 +177,7 @@ public static partial class Program {
 
           if (!string.IsNullOrEmpty(options.OtelTraceEndpoint)) {
             tracing.AddOtlpExporter(exporter => {
-              exporter.Endpoint = new(options.OtelTraceEndpoint);
+              ConfigureOtlpGrpcExporter(exporter, options.OtelTraceEndpoint);
             });
           }
         })
@@ -188,7 +189,7 @@ public static partial class Program {
 
           if (!string.IsNullOrEmpty(options.OtelMeterEndpoint)) {
             metrics.AddOtlpExporter(exporter => {
-              exporter.Endpoint = new(options.OtelMeterEndpoint);
+              ConfigureOtlpGrpcExporter(exporter, options.OtelMeterEndpoint);
             });
           }
 
@@ -230,6 +231,11 @@ public static partial class Program {
     } else {
       await app.RunAsync();
     }
+  }
+
+  static void ConfigureOtlpGrpcExporter(OtlpExporterOptions exporter, string endpoint) {
+    exporter.Endpoint = new(endpoint);
+    exporter.Protocol = OtlpExportProtocol.Grpc;
   }
 
   static void AddNoopServices(WebApplicationBuilder builder) {
