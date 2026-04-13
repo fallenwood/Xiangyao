@@ -27,6 +27,6 @@ USER root
 COPY --from=build /usr/lib/libssl.so.3 /usr/lib/libssl.so.3
 COPY --from=build /usr/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
 
-COPY --from=build /usr/lib/libc++.so.1 /usr/lib/libc++.so.1
+COPY --from=build /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
 
 ENTRYPOINT ["./Xiangyao"]
