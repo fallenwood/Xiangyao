@@ -1,9 +1,10 @@
-FROM mcr.microsoft.com/azurelinux/distroless/base:3.0-distroless-arm64v8 AS base
+FROM mcr.microsoft.com/azurelinux/distroless/base:3.0.20260401-arm64 AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS prepare
+FROM mcr.microsoft.com/dotnet/sdk:10.0-azurelinux3.0 AS prepare
 WORKDIR "/src"
+RUN tdnf install xz -y
 
 RUN curl https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz -O && \
   tar xf zig-x86_64-linux-0.15.2.tar.xz && \
