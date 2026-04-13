@@ -5,10 +5,10 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:10.0-azurelinux3.0 AS build
 WORKDIR "/src"
 COPY . .
+RUN tdnf install -y libcxx
 
 FROM build AS publish
 RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -f net10.0 -c Release -o /app/publish /p:PublishTrimmed=true
-RUN rm /app/publish/*.dbg
 RUN rm /app/publish/*.pdb
 
 FROM base AS final
@@ -26,5 +26,7 @@ USER root
 # Copy openssl libraries
 COPY --from=build /usr/lib/libssl.so.3 /usr/lib/libssl.so.3
 COPY --from=build /usr/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
+
+COPY --from=build /usr/lib/libc++.so.1 /usr/lib/libc++.so.1
 
 ENTRYPOINT ["./Xiangyao"]
