@@ -45,30 +45,30 @@ jobs:
       tags: |
         $(tagArm)
 
-  - task: Docker@2
-    inputs:
-      containerRegistry: 'docker hub'
-      repository: 'fallenwood/xiangyao'
-      ${{ if eq(parameters.pipelineType, 'Official') }}:
-        displayName: 'Docker Build And Push'
-        command: 'buildAndPush'
-      ${{ if ne(parameters.pipelineType, 'Official') }}:
-        displayName: 'Docker Build'
-        command: 'build'
-      Dockerfile: '**/Dockerfile.nativeaot'
-      tags: |
-        $(tag)-aot
+  # - task: Docker@2
+  #   inputs:
+  #     containerRegistry: 'docker hub'
+  #     repository: 'fallenwood/xiangyao'
+  #     ${{ if eq(parameters.pipelineType, 'Official') }}:
+  #       displayName: 'Docker Build And Push'
+  #       command: 'buildAndPush'
+  #     ${{ if ne(parameters.pipelineType, 'Official') }}:
+  #       displayName: 'Docker Build'
+  #       command: 'build'
+  #     Dockerfile: '**/Dockerfile.nativeaot'
+  #     tags: |
+  #       $(tag)-aot
 
-  - task: Docker@2
-    inputs:
-      containerRegistry: 'docker hub'
-      repository: 'fallenwood/xiangyao'
-      ${{ if eq(parameters.pipelineType, 'Official') }}:
-        displayName: 'Docker Build And Push'
-        command: 'buildAndPush'
-      ${{ if ne(parameters.pipelineType, 'Official') }}:
-        displayName: 'Docker Build'
-        command: 'build'
-      Dockerfile: '**/Dockerfile.arm64-nativeaot'
-      tags: |
-        $(tagArm)-aot
+  # - task: Docker@2
+  #   inputs:
+  #     containerRegistry: 'docker hub'
+  #     repository: 'fallenwood/xiangyao'
+  #     ${{ if eq(parameters.pipelineType, 'Official') }}:
+  #       displayName: 'Docker Build And Push'
+  #       command: 'buildAndPush'
+  #     ${{ if ne(parameters.pipelineType, 'Official') }}:
+  #       displayName: 'Docker Build'
+  #       command: 'build'
+  #     Dockerfile: '**/Dockerfile.arm64-nativeaot'
+  #     tags: |
+  #       $(tagArm)-aot
