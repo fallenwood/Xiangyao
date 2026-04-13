@@ -5,6 +5,7 @@
 
   <ItemGroup>
     <PackageReference Include="ConsoleAppFramework" />
+    <PackageReference Include="Fallenwood.PublishAotCross" />
     <PackageReference Include="Yarp.ReverseProxy" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />

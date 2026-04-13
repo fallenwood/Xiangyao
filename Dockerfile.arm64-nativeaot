@@ -1,9 +1,17 @@
-FROM mcr.microsoft.com/azurelinux/distroless/base:3.0.20260401 AS base
+FROM mcr.microsoft.com/azurelinux/distroless/base:3.0-distroless-arm64v8 AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0-azurelinux3.0-aot AS prepare
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS prepare
 WORKDIR "/src"
+
+RUN curl https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz -O && \
+  tar xf zig-x86_64-linux-0.15.2.tar.xz && \
+  mv zig-x86_64-linux-0.15.2 /usr/local && \
+  ln -s /usr/local/zig-x86_64-linux-0.15.2/zig /usr/local/bin/zig
+
+FROM prepare AS build
+COPY . .
 
 FROM build AS publish
 RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -f net10.0 -c Release -o /app/publish /p:PublishAot=true
@@ -21,11 +29,5 @@ ENV DOTNET_gcServer=1
 ENV DOTNET_RuntimeAsync=1
 
 USER root
-
-# Copy openssl libraries
-COPY --from=build /usr/lib/libssl.so.3 /usr/lib/libssl.so.3
-COPY --from=build /usr/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
-
-COPY --from=build /usr/lib/libc++.so.6 /usr/lib/libc++.so.6
 
 ENTRYPOINT ["./Xiangyao"]
