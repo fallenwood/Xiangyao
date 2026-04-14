@@ -5,7 +5,6 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:10.0-azurelinux3.0 AS build
 WORKDIR "/src"
 COPY . .
-RUN tdnf install -y libcxx
 
 FROM build AS publish
 RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -f net10.0 -c Release -o /app/publish /p:PublishTrimmed=true
