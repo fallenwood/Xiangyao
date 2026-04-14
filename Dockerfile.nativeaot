@@ -1,22 +1,19 @@
-FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS base
+FROM mcr.microsoft.com/azurelinux/distroless/base:3.0.20260401 AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-RUN apt-get update -y && apt-get install -y \
-    clang zlib1g-dev
-
+FROM mcr.microsoft.com/dotnet/sdk:10.0-azurelinux3.0-aot AS build
 WORKDIR "/src"
 COPY . .
-RUN dotnet restore "src/Xiangyao/Xiangyao.csproj"
-RUN dotnet build "src/Xiangyao/Xiangyao.csproj" -f net10.0 -c Release -o /app/build
 
 FROM build AS publish
 RUN dotnet publish "src/Xiangyao/Xiangyao.csproj" -f net10.0 -c Release -o /app/publish /p:PublishAot=true
+RUN rm /app/publish/*.dbg
+RUN rm /app/publish/*.pdb
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish/Xiangyao ./
+COPY --from=publish /app/publish .
 
 ENV ASPNETCORE_URLS=http://+:80
 ENV ASPNETCORE_ENVIRONMENT=Production
@@ -25,5 +22,11 @@ ENV DOTNET_gcServer=1
 ENV DOTNET_RuntimeAsync=1
 
 USER root
+
+# Copy openssl libraries
+COPY --from=build /usr/lib/libssl.so.3 /usr/lib/libssl.so.3
+COPY --from=build /usr/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
+
+# COPY --from=build /usr/lib/libc++.so.6 /usr/lib/libc++.so.6
 
 ENTRYPOINT ["./Xiangyao"]

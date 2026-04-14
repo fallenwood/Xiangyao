@@ -19,6 +19,7 @@
     <PackageVersion Include="ZLinq" Version="1.5.6" />
     <PackageVersion Include="ZstdSharp.Port" Version="0.8.7" />
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.6.2" />
+    <PackageVersion Include="Fallenwood.PublishAotCross" Version="0.3.0" />
     <!-- tests -->
     <PackageVersion Include="coverlet.collector" Version="8.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
