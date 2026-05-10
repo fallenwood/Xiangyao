@@ -327,10 +327,9 @@ To use the native ACME client instead of LettuceEncrypt:
 2. **Automatic Renewal**: Background service with 30-day renewal
 3. **Certificate Revocation**: Implement revocation API
 4. **ECC Keys**: P-256, P-384 support alongside RSA
-5. **External Account Binding**: Support for EAB flow
-6. **Rate Limit Handling**: Exponential backoff for retries
-7. **More DNS Providers**: Complete AWS Route53, Azure DNS, Google Cloud DNS implementations
-8. **OCSP Stapling**: Certificate status checking
+5. **Rate Limit Handling**: Exponential backoff for retries
+6. **More DNS Providers**: Complete AWS Route53, Azure DNS, Google Cloud DNS implementations
+7. **OCSP Stapling**: Certificate status checking
 
 ## Build Status
 

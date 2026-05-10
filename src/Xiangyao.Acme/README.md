@@ -147,6 +147,24 @@ app.MapReverseProxy();
 var client = new AcmeClient("https://acme-staging-v02.api.letsencrypt.org/directory");
 ```
 
+### ZeroSSL
+
+ZeroSSL uses the ACME v2 endpoint below and requires External Account Binding (EAB). You can provide dashboard-generated credentials explicitly, or use `ZeroSslExternalAccountBindingProvider` to obtain them from ZeroSSL using the account email.
+
+```csharp
+var client = new AcmeClient(AcmeDirectoryUrls.ZeroSsl);
+var eabProvider = new ZeroSslExternalAccountBindingProvider(new HttpClient());
+var externalAccountBinding = await eabProvider.GetOrCreateAsync(
+  "admin@example.com",
+  "./test-certificates/zerossl-eab.json");
+
+var options = new AcmeCertificateManagerOptions {
+  PreferredChallengeType = ChallengeType.Http01,
+  Http01Store = new Http01ChallengeStore(),
+  ExternalAccountBinding = externalAccountBinding
+};
+```
+
 ## ACME Protocol Flow
 
 1. **Initialize**: Fetch ACME directory and get initial nonce
@@ -251,7 +269,7 @@ This ACME client can replace the `LettuceEncrypt` dependency in Xiangyao proxy. 
 - [ ] Automatic certificate renewal with background service
 - [ ] Certificate revocation support
 - [ ] ECC key support (P-256, P-384)
-- [ ] External account binding (EAB) support
+- [x] External account binding (EAB) support
 - [ ] More DNS provider implementations (AWS Route53, Azure DNS, Google Cloud DNS)
 
 ## References

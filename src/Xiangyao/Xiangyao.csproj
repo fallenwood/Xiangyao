@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
+    <Features></Features>
   </PropertyGroup>
 
   <ItemGroup>

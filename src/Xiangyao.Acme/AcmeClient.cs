@@ -15,6 +15,26 @@ using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
 
 
+public enum AcmeCertificateAuthority {
+  LetsEncrypt,
+  ZeroSsl,
+}
+
+public static class AcmeDirectoryUrls {
+  public const string LetsEncrypt = "https://acme-v02.api.letsencrypt.org/directory";
+  public const string ZeroSsl = "https://acme.zerossl.com/v2/DV90";
+
+  public static string GetDirectoryUrl(AcmeCertificateAuthority certificateAuthority) {
+    return certificateAuthority switch {
+      AcmeCertificateAuthority.LetsEncrypt => LetsEncrypt,
+      AcmeCertificateAuthority.ZeroSsl => ZeroSsl,
+      _ => throw new ArgumentOutOfRangeException(nameof(certificateAuthority), certificateAuthority, "Unsupported ACME certificate authority"),
+    };
+  }
+}
+
+public sealed record AcmeExternalAccountBindingOptions(string KeyIdentifier, string HmacKey);
+
 public class AcmeClient : IDisposable {
   private readonly HttpClient _httpClient;
   private readonly AsymmetricCipherKeyPair _accountKey;
@@ -24,19 +44,19 @@ public class AcmeClient : IDisposable {
   private string? _nonce;
   private string? _kid;
 
-  public AcmeClient(string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory")
+  public AcmeClient(string directoryUrl = AcmeDirectoryUrls.LetsEncrypt)
     : this(new HttpClient(), GenerateRsaKeyPair(), directoryUrl) {
   }
 
-  public AcmeClient(HttpClient httpClient, string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory")
+  public AcmeClient(HttpClient httpClient, string directoryUrl = AcmeDirectoryUrls.LetsEncrypt)
     : this(httpClient, GenerateRsaKeyPair(), directoryUrl) {
   }
 
-  public AcmeClient(AsymmetricCipherKeyPair accountKey, string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory")
+  public AcmeClient(AsymmetricCipherKeyPair accountKey, string directoryUrl = AcmeDirectoryUrls.LetsEncrypt)
     : this(new HttpClient(), accountKey, directoryUrl) {
   }
 
-  public AcmeClient(HttpClient httpClient, AsymmetricCipherKeyPair accountKey, string directoryUrl = "https://acme-v02.api.letsencrypt.org/directory") {
+  public AcmeClient(HttpClient httpClient, AsymmetricCipherKeyPair accountKey, string directoryUrl = AcmeDirectoryUrls.LetsEncrypt) {
     _httpClient = httpClient;
     _directoryUrl = directoryUrl;
     _accountKey = accountKey;
@@ -50,12 +70,21 @@ public class AcmeClient : IDisposable {
     await GetNonceAsync(cancellationToken);
   }
 
-  public async Task<AcmeAccount> CreateAccountAsync(string[] emailAddresses, bool termsOfServiceAgreed, CancellationToken cancellationToken = default) {
+  public Task<AcmeAccount> CreateAccountAsync(string[] emailAddresses, bool termsOfServiceAgreed, CancellationToken cancellationToken = default) {
+    return this.CreateAccountAsync(emailAddresses, termsOfServiceAgreed, externalAccountBinding: null, cancellationToken);
+  }
+
+  public async Task<AcmeAccount> CreateAccountAsync(
+    string[] emailAddresses,
+    bool termsOfServiceAgreed,
+    AcmeExternalAccountBindingOptions? externalAccountBinding,
+    CancellationToken cancellationToken = default) {
     if (_directory == null) throw new InvalidOperationException("Client not initialized");
 
     var payload = new AcmeAccountPayload(
       Contact: emailAddresses.Select(e => $"mailto:{e}").ToArray(),
-      TermsOfServiceAgreed: termsOfServiceAgreed);
+      TermsOfServiceAgreed: termsOfServiceAgreed,
+      ExternalAccountBinding: externalAccountBinding == null ? null : this.CreateExternalAccountBinding(externalAccountBinding));
 
     var response = await SendSignedRequestAsync(
       _directory.NewAccount,
@@ -207,6 +236,36 @@ public class AcmeClient : IDisposable {
       Signature: Base64UrlEncode(signature));
   }
 
+  private AcmeJwsEnvelope CreateExternalAccountBinding(AcmeExternalAccountBindingOptions options) {
+    if (this._directory?.NewAccount == null) {
+      throw new InvalidOperationException("Directory not initialized");
+    }
+
+    var header = new AcmeExternalAccountBindingJwsHeader(
+      Alg: "HS256",
+      Kid: options.KeyIdentifier,
+      Url: this._directory.NewAccount);
+
+    var headerBase64 = Base64UrlEncode(JsonSerializer.Serialize(header, AcmeJsonContext.Default.AcmeExternalAccountBindingJwsHeader));
+    var payloadBase64 = Base64UrlEncode(JsonSerializer.Serialize(this.GetJwk(), AcmeJsonContext.Default.AcmeJwk));
+    var signatureInput = $"{headerBase64}.{payloadBase64}";
+
+    byte[] hmacKey;
+    try {
+      hmacKey = Base64UrlDecode(options.HmacKey);
+    } catch (FormatException ex) {
+      throw new AcmeException("Invalid external account binding HMAC key. Expected a base64url-encoded key.", ex);
+    }
+
+    using var hmac = new HMACSHA256(hmacKey);
+    var signature = hmac.ComputeHash(Encoding.UTF8.GetBytes(signatureInput));
+
+    return new AcmeJwsEnvelope(
+      Protected: headerBase64,
+      Payload: payloadBase64,
+      Signature: Base64UrlEncode(signature));
+  }
+
   private AcmeJwk GetJwk() {
     var rsaKey = (RsaKeyParameters)_accountKey.Public;
     return new AcmeJwk(
@@ -269,6 +328,23 @@ public class AcmeClient : IDisposable {
 
   private static string Base64UrlEncode(string data) {
     return Base64UrlEncode(Encoding.UTF8.GetBytes(data));
+  }
+
+  private static byte[] Base64UrlDecode(string data) {
+    var base64 = data.Trim()
+      .Replace('-', '+')
+      .Replace('_', '/');
+
+    var padding = base64.Length % 4;
+    if (padding == 1) {
+      throw new FormatException("Invalid base64url string length.");
+    }
+
+    if (padding > 0) {
+      base64 = base64.PadRight(base64.Length + 4 - padding, '=');
+    }
+
+    return Convert.FromBase64String(base64);
   }
 
   public void Dispose() {

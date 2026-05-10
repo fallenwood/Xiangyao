@@ -31,8 +31,11 @@ public static partial class Program {
   /// <param name="useHttps">--https, Use HTTPS</param>
   /// <param name="useHttpsRedirect">--https-redirect, Use HTTPS Redirect</param>
   /// <param name="useLetsEncrypt">--lets-encrypt, Use Let's Encrypt</param>
-  /// <param name="letsEncryptEmailAddress">--lets-encrypt-email, Let's Encrypt Email Address</param>
-  /// <param name="letsEncryptDomainNames">Let's Encrypt Domain Names</param>
+  /// <param name="useZeroSsl">--zero-ssl, Use ZeroSSL</param>
+  /// <param name="acmeEmail">ACME account email address</param>
+  /// <param name="acmeDomainNames">ACME certificate domain names</param>
+  /// <param name="zeroSslEabKid">Optional ZeroSSL EAB Key Identifier</param>
+  /// <param name="zeroSslEabHmacKey">Optional ZeroSSL EAB HMAC Key</param>
   /// <param name="useOtel">Use Opentelemetry</param>
   /// <param name="otelLogEndpoint">--otel-log, Opentelemetry Logs Endpoint</param>
   /// <param name="otelTraceEndpoint">--otel-trace, Opentelemetry Trace Endpoint</param>
@@ -46,8 +49,11 @@ public static partial class Program {
     bool useHttps = false,
     bool useHttpsRedirect = false,
     bool useLetsEncrypt = false,
-    string letsEncryptEmailAddress = "",
-    string[]? letsEncryptDomainNames = null,
+    bool useZeroSsl = false,
+    string acmeEmail = "",
+    string[]? acmeDomainNames = null,
+    string zeroSslEabKid = "",
+    string zeroSslEabHmacKey = "",
     bool useOtel = false,
     string otelLogEndpoint = "http://localhost:4317",
     string otelTraceEndpoint = "http://localhost:4317",
@@ -56,13 +62,26 @@ public static partial class Program {
     string certificateKey = "",
     bool usePortal = false,
     int portalPort = 8080) {
+    if (useLetsEncrypt && useZeroSsl) {
+      throw new ArgumentException("Use either --lets-encrypt or --zero-ssl, not both.");
+    }
+
+    var certificateAuthority = useZeroSsl
+      ? AcmeCertificateAuthority.ZeroSsl
+      : AcmeCertificateAuthority.LetsEncrypt;
+
     var options = new Options(
-      LetsEncryptDomainNames: letsEncryptDomainNames ?? [],
+      AcmeDomainNames: acmeDomainNames ?? [],
       Provider: provider,
-      UseLetsEncrypt: useLetsEncrypt,
+      UseAcmeCertificates: useLetsEncrypt || useZeroSsl,
       UseHttps: useHttps,
       UseHttpsRedirect: useHttpsRedirect,
-      LetsEncryptEmailAddress: letsEncryptEmailAddress,
+      AcmeEmailAddress: acmeEmail,
+      CertificateAuthority: certificateAuthority,
+      ExternalAccountBinding: CreateExternalAccountBindingOptions(
+        certificateAuthority,
+        zeroSslEabKid,
+        zeroSslEabHmacKey),
       Certificate: certificate,
       CertificateKey: certificateKey,
       UseOtel: useOtel,
@@ -96,12 +115,14 @@ public static partial class Program {
     }
 
     if (options.UseHttps) {
-      if (options.UseLetsEncrypt) {
-        Console.WriteLine($"Use LetsEncrypt with {options.LetsEncryptEmailAddress} for {string.Join(",", options.LetsEncryptDomainNames)}");
+      if (options.UseAcmeCertificates) {
+        var authorityName = GetAcmeAuthorityDisplayName(options.CertificateAuthority);
+        Console.WriteLine($"Use {authorityName} with {options.AcmeEmailAddress} for {string.Join(",", options.AcmeDomainNames)}");
 
-        domainProvider.SetDomainNames(options.LetsEncryptDomainNames);
+        domainProvider.SetDomainNames(options.AcmeDomainNames);
 
-        var certificateDirectory = Path.Join(Directory.GetCurrentDirectory(), "letsencrypt");
+        var certificateDirectory = Path.Join(Directory.GetCurrentDirectory(), GetAcmeCertificateDirectoryName(options.CertificateAuthority));
+        var acmeDirectoryUrl = AcmeDirectoryUrls.GetDirectoryUrl(options.CertificateAuthority);
 
         builder.Services.AddHttpClient();
         builder.Services.AddAcmeHttp01Challenge();
@@ -111,8 +132,10 @@ public static partial class Program {
             sp.GetRequiredService<IAcmeDomainProvider>(),
             sp.GetRequiredService<IHttp01ChallengeStore>(),
             sp.GetRequiredService<IHttpClientFactory>(),
-            options.LetsEncryptEmailAddress,
+            options.AcmeEmailAddress,
             certificateDirectory,
+            acmeDirectoryUrl,
+            options.ExternalAccountBinding,
             sp.GetRequiredService<ILogger<AcmeCertificateHostedService>>()));
 
         builder.Services.AddHostedService(sp => sp.GetRequiredService<AcmeCertificateHostedService>());
@@ -209,7 +232,7 @@ public static partial class Program {
 
     var app = builder.Build();
 
-    if (options.UseLetsEncrypt) {
+    if (options.UseAcmeCertificates) {
       app.UseAcmeHttp01Challenge();
     }
 
@@ -236,6 +259,44 @@ public static partial class Program {
   static void ConfigureOtlpGrpcExporter(OtlpExporterOptions exporter, string endpoint) {
     exporter.Endpoint = new(endpoint);
     exporter.Protocol = OtlpExportProtocol.Grpc;
+  }
+
+  static AcmeExternalAccountBindingOptions? CreateExternalAccountBindingOptions(
+    AcmeCertificateAuthority certificateAuthority,
+    string zeroSslEabKid,
+    string zeroSslEabHmacKey) {
+    if (certificateAuthority != AcmeCertificateAuthority.ZeroSsl) {
+      return null;
+    }
+
+    var hasKeyIdentifier = !string.IsNullOrWhiteSpace(zeroSslEabKid);
+    var hasHmacKey = !string.IsNullOrWhiteSpace(zeroSslEabHmacKey);
+
+    if (!hasKeyIdentifier && !hasHmacKey) {
+      return null;
+    }
+
+    if (hasKeyIdentifier != hasHmacKey) {
+      throw new ArgumentException("Provide both --zero-ssl-eab-kid and --zero-ssl-eab-hmac-key, or omit both to obtain them from ZeroSSL using the account email.");
+    }
+
+    return new AcmeExternalAccountBindingOptions(zeroSslEabKid, zeroSslEabHmacKey);
+  }
+
+  static string GetAcmeAuthorityDisplayName(AcmeCertificateAuthority certificateAuthority) {
+    return certificateAuthority switch {
+      AcmeCertificateAuthority.LetsEncrypt => "Let's Encrypt",
+      AcmeCertificateAuthority.ZeroSsl => "ZeroSSL",
+      _ => throw new ArgumentOutOfRangeException(nameof(certificateAuthority), certificateAuthority, "Unsupported ACME certificate authority"),
+    };
+  }
+
+  static string GetAcmeCertificateDirectoryName(AcmeCertificateAuthority certificateAuthority) {
+    return certificateAuthority switch {
+      AcmeCertificateAuthority.LetsEncrypt => "letsencrypt",
+      AcmeCertificateAuthority.ZeroSsl => "zerossl",
+      _ => throw new ArgumentOutOfRangeException(nameof(certificateAuthority), certificateAuthority, "Unsupported ACME certificate authority"),
+    };
   }
 
   static void AddNoopServices(WebApplicationBuilder builder) {

@@ -7,22 +7,22 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" PrivateAssets="All" />
     <PackageVersion Include="ConsoleAppFramework" Version="5.7.13" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.2" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.2" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.2" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.4.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
-    <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.5" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.5.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.7" />
     <PackageVersion Include="ZLinq" Version="1.5.6" />
-    <PackageVersion Include="ZstdSharp.Port" Version="0.8.7" />
+    <PackageVersion Include="ZstdSharp.Port" Version="0.8.8" />
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.6.2" />
-    <PackageVersion Include="Fallenwood.PublishAotCross" Version="0.3.0" />
+    <PackageVersion Include="Fallenwood.PublishAotCross" Version="0.5.0" />
     <!-- tests -->
-    <PackageVersion Include="coverlet.collector" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="FluentAssertions" Version="8.9.0" />
