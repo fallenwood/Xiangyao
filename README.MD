@@ -14,6 +14,22 @@ See `examples/docker`
 ### Standalone
 See `examples/standalone`
 
+### ACME certificates
+
+Enable HTTPS certificate issuance with Let's Encrypt:
+
+```bash
+xiangyao --https --lets-encrypt --acme-email admin@example.com --acme-domain-names example.com
+```
+
+Use ZeroSSL instead with an account email. Xiangyao obtains the required EAB credentials from ZeroSSL automatically, matching acme.sh behavior:
+
+```bash
+xiangyao --https --zero-ssl --acme-email admin@example.com --acme-domain-names example.com
+```
+
+You can also pass dashboard-generated EAB credentials explicitly with `--zero-ssl-eab-kid` and `--zero-ssl-eab-hmac-key`.
+
 ### Others
 TODO
 

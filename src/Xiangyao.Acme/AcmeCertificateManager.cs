@@ -13,16 +13,19 @@ public class AcmeCertificateManager {
   private readonly IHttp01ChallengeStore _challengeStore;
   private readonly string _email;
   private readonly string _certificateDirectory;
+  private readonly AcmeExternalAccountBindingOptions? _externalAccountBinding;
 
   public AcmeCertificateManager(
     AcmeClient client,
     IHttp01ChallengeStore challengeStore,
     string email,
-    string certificateDirectory) {
+    string certificateDirectory,
+    AcmeExternalAccountBindingOptions? externalAccountBinding = null) {
     _client = client;
     _challengeStore = challengeStore;
     _email = email;
     _certificateDirectory = certificateDirectory;
+    _externalAccountBinding = externalAccountBinding;
 
     Directory.CreateDirectory(_certificateDirectory);
   }
@@ -30,7 +33,7 @@ public class AcmeCertificateManager {
   public async Task<X509Certificate2> ObtainCertificateAsync(string[] domainNames, CancellationToken cancellationToken = default) {
     await _client.InitializeAsync(cancellationToken);
 
-    await _client.CreateAccountAsync([_email], termsOfServiceAgreed: true, cancellationToken);
+    await _client.CreateAccountAsync([_email], termsOfServiceAgreed: true, _externalAccountBinding, cancellationToken);
 
     var order = await _client.CreateOrderAsync(domainNames, cancellationToken);
 

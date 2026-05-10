@@ -10,9 +10,12 @@ internal sealed class AcmeCertificateHostedService(
   IHttpClientFactory httpClientFactory,
   string email,
   string certificateDirectory,
+  string acmeDirectoryUrl,
+  AcmeExternalAccountBindingOptions? externalAccountBinding,
   ILogger<AcmeCertificateHostedService> logger) : BackgroundService {
 
   private volatile X509Certificate2? certificate;
+  private AcmeExternalAccountBindingOptions? resolvedExternalAccountBinding = externalAccountBinding;
   private string[] lastDomainNames = [];
 
   public X509Certificate2? Certificate => this.certificate;
@@ -39,11 +42,13 @@ internal sealed class AcmeCertificateHostedService(
   }
 
   private async Task ObtainCertificateAsync(string[] domains, CancellationToken cancellationToken) {
-    using var client = new AcmeClient(httpClientFactory.CreateClient());
+    using var client = new AcmeClient(httpClientFactory.CreateClient(), acmeDirectoryUrl);
+    var currentExternalAccountBinding = await this.GetExternalAccountBindingAsync(cancellationToken);
 
     var options = new AcmeCertificateManagerOptions {
       PreferredChallengeType = ChallengeType.Http01,
       Http01Store = challengeStore,
+      ExternalAccountBinding = currentExternalAccountBinding,
     };
 
     var manager = new AcmeCertificateManagerV2(
@@ -55,6 +60,21 @@ internal sealed class AcmeCertificateHostedService(
     var cert = await manager.ObtainCertificateAsync(domains, cancellationToken);
     manager.SaveCertificate(cert, "xiangyao");
     this.certificate = cert;
+  }
+
+  private async Task<AcmeExternalAccountBindingOptions?> GetExternalAccountBindingAsync(CancellationToken cancellationToken) {
+    if (this.resolvedExternalAccountBinding != null ||
+      !string.Equals(acmeDirectoryUrl, AcmeDirectoryUrls.ZeroSsl, StringComparison.OrdinalIgnoreCase)) {
+      return this.resolvedExternalAccountBinding;
+    }
+
+    logger.LogInformation("Obtaining ZeroSSL EAB credentials using account email");
+
+    using var httpClient = httpClientFactory.CreateClient();
+    var provider = new ZeroSslExternalAccountBindingProvider(httpClient);
+    var cachePath = Path.Combine(certificateDirectory, "zerossl-eab.json");
+    this.resolvedExternalAccountBinding = await provider.GetOrCreateAsync(email, cachePath, cancellationToken);
+    return this.resolvedExternalAccountBinding;
   }
 
   private void TryLoadExistingCertificate() {

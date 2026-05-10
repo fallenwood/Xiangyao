@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Xiangyao.Acme\Xiangyao.Acme.csproj" />
     <ProjectReference Include="..\..\src\Xiangyao\Xiangyao.csproj" />
     <ProjectReference Include="..\..\src\Xiangyao.DockerClient\Xiangyao.DockerClient.csproj" />
   </ItemGroup>

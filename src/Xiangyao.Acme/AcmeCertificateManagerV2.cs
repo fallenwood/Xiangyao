@@ -20,6 +20,7 @@ public class AcmeCertificateManagerOptions {
   public IDns01ChallengeStore? Dns01Store { get; set; }
   public ITlsAlpn01ChallengeStore? TlsAlpn01Store { get; set; }
   public IDnsProvider? DnsProvider { get; set; }
+  public AcmeExternalAccountBindingOptions? ExternalAccountBinding { get; set; }
 }
 
 public class AcmeCertificateManagerV2 {
@@ -46,7 +47,7 @@ public class AcmeCertificateManagerV2 {
     CancellationToken cancellationToken = default) {
     await _client.InitializeAsync(cancellationToken);
 
-    await _client.CreateAccountAsync([_email], termsOfServiceAgreed: true, cancellationToken);
+    await _client.CreateAccountAsync([_email], termsOfServiceAgreed: true, _options.ExternalAccountBinding, cancellationToken);
 
     var order = await _client.CreateOrderAsync(domainNames, cancellationToken);
 
