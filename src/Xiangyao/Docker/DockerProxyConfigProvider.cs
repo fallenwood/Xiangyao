@@ -50,7 +50,12 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     this.logger.LogDebug(nameof(GetConfig));
 
     if (!this.hasLoadedConfig) {
-      this.RefreshConfigAsync(forceRefresh: false).GetAwaiter().GetResult();
+      try {
+        this.RefreshConfigAsync(forceRefresh: false).GetAwaiter().GetResult();
+      } catch (Exception ex) {
+        this.logger.LogError(ex, "Failed to load the initial Docker configuration; retrying in the background");
+        this.Update();
+      }
     }
 
     var currentConfig = this.config.ProxyConfig;

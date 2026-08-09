@@ -36,7 +36,7 @@ public class ChangeNotifier(Func<ValueTask> action) : IChangeNotifier {
 
   public int ResetCount() => Interlocked.Exchange(ref this.count, 0);
 
-  public async ValueTask HandleAsync() {
-    await action();
+  public ValueTask HandleAsync() {
+    return action();
   }
 }
