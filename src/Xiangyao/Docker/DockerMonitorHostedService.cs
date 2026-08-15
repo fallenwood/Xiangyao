@@ -60,11 +60,10 @@ internal class DockerMonitorHostedService(
       if (shouldRefresh) {
         try {
           await proxyConfigProvider.Notifier.HandleAsync();
+          shouldRefresh = false;
         } catch (Exception ex) {
           logger.LogError(ex, "Error updating configuration");
         }
-
-        shouldRefresh = false;
       }
 
       if (lastCount > 0) {
