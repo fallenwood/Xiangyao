@@ -19,8 +19,12 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
 
   private CancellationTokenSource source = new();
   private volatile bool hasLoadedConfig;
+  private int initialLoadScheduled;
 
   private XiangyaoProxyConfig config;
+
+  // Exposed for tests to observe the fire-and-forget initial load.
+  internal Task InitialLoadTask { get; private set; } = Task.CompletedTask;
 
   public DockerProxyConfigProvider(
         IDockerProvider dockerProvider,
@@ -50,12 +54,7 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     this.logger.LogDebug(nameof(GetConfig));
 
     if (!this.hasLoadedConfig) {
-      try {
-        this.RefreshConfigAsync(forceRefresh: false).GetAwaiter().GetResult();
-      } catch (Exception ex) {
-        this.logger.LogError(ex, "Failed to load the initial Docker configuration; retrying in the background");
-        this.Update();
-      }
+      this.ScheduleInitialLoad();
     }
 
     var currentConfig = this.config.ProxyConfig;
@@ -69,6 +68,23 @@ internal sealed class DockerProxyConfigProvider : IXiangyaoProxyConfigProvider {
     this.logger.LogDebug(nameof(Update));
 
     this.Notifier.Notify();
+  }
+
+  private void ScheduleInitialLoad() {
+    if (Interlocked.Exchange(ref this.initialLoadScheduled, 1) != 0) {
+      return;
+    }
+
+    this.InitialLoadTask = this.LoadInitialConfigAsync();
+  }
+
+  private async Task LoadInitialConfigAsync() {
+    try {
+      await this.RefreshConfigAsync(forceRefresh: false).ConfigureAwait(false);
+    } catch (Exception ex) {
+      this.logger.LogError(ex, "Failed to load the initial Docker configuration; retrying in the background");
+      this.Update();
+    }
   }
 
   private async Task<XiangyaoProxyConfig> BuildXiangyaoProxyConfigAsync(CancellationToken changeToken) {
