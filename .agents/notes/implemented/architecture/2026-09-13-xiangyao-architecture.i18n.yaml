@@ -1,0 +1,6 @@
+files:
+  - path: 2026-09-13-xiangyao-architecture.md
+    language: en
+  - path: 2026-09-13-xiangyao-architecture.zh.md
+    language: zh
+status: implemented
