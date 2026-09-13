@@ -35,7 +35,7 @@ Extended the native C# ACME client with full support for all three ACME v2 chall
 1. **Dns01ChallengeStore.cs** - DNS challenge token storage
 2. **TlsAlpn01ChallengeStore.cs** - TLS certificate store with self-signed cert generation
 3. **DnsProviders.cs** - Multiple DNS provider implementations
-4. **AcmeCertificateManagerV2.cs** - Enhanced manager supporting all challenges
+4. **AcmeCertificateManager.cs** - Enhanced manager supporting all challenges
 
 ## Enhanced Files
 
@@ -58,7 +58,7 @@ var options = new AcmeCertificateManagerOptions {
     Dns01Store = new Dns01ChallengeStore(),
     DnsProvider = new CloudflareDnsProvider(apiToken, zoneId)
 };
-var manager = new AcmeCertificateManagerV2(client, email, path, options);
+var manager = new AcmeCertificateManager(client, email, path, options);
 var cert = await manager.ObtainCertificateAsync(new[] { "*.example.com" });
 ```
 
@@ -68,7 +68,7 @@ var options = new AcmeCertificateManagerOptions {
     PreferredChallengeType = ChallengeType.TlsAlpn01,
     TlsAlpn01Store = new TlsAlpn01ChallengeStore()
 };
-var manager = new AcmeCertificateManagerV2(client, email, path, options);
+var manager = new AcmeCertificateManager(client, email, path, options);
 var cert = await manager.ObtainCertificateAsync(new[] { "example.com" });
 ```
 
@@ -121,7 +121,7 @@ Critical: true
 
 ## Multi-Challenge Support
 
-The enhanced `AcmeCertificateManagerV2` supports:
+The enhanced `AcmeCertificateManager` supports:
 - **Preferred challenge type** configuration
 - **Automatic fallback** to other available challenges
 - **Per-domain challenge selection**
@@ -133,7 +133,7 @@ The enhanced `AcmeCertificateManagerV2` supports:
 |------|-------|---------|
 | AcmeClient.cs | ~350 | Core protocol |
 | AcmeCertificateManager.cs | ~160 | HTTP-01 only |
-| AcmeCertificateManagerV2.cs | ~270 | All challenges |
+| AcmeCertificateManager.cs | ~270 | All challenges |
 | Http01ChallengeStore.cs | ~30 | HTTP storage |
 | Dns01ChallengeStore.cs | ~30 | DNS storage |
 | TlsAlpn01ChallengeStore.cs | ~70 | TLS storage + cert gen |
@@ -164,7 +164,7 @@ The enhanced `AcmeCertificateManagerV2` supports:
 
 **Existing HTTP-01 users**: No changes needed, `AcmeCertificateManager` still works
 
-**New DNS-01/TLS-ALPN-01 users**: Use `AcmeCertificateManagerV2` with options
+**New DNS-01/TLS-ALPN-01 users**: Use `AcmeCertificateManager` with options
 
 **Wildcard certificates**: Configure DNS-01 with DNS provider
 
@@ -184,7 +184,7 @@ var options = new AcmeCertificateManagerOptions {
 };
 
 // 3. Create manager
-var manager = new AcmeCertificateManagerV2(
+var manager = new AcmeCertificateManager(
     client,
     "admin@example.com",
     "./certificates",
@@ -199,3 +199,4 @@ manager.SaveCertificate(cert, "wildcard-example");
 ```
 
 This covers **every subdomain** automatically! 🎉
+

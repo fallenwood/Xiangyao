@@ -10,7 +10,7 @@ Successfully created a comprehensive native C# ACME (Automatic Certificate Manag
 src/Xiangyao.Acme/
 ├── AcmeClient.cs                    # Core ACME protocol implementation
 ├── AcmeCertificateManager.cs        # HTTP-01 certificate manager
-├── AcmeCertificateManagerV2.cs      # Multi-challenge certificate manager
+├── AcmeCertificateManager.cs      # Multi-challenge certificate manager
 ├── Http01ChallengeStore.cs          # HTTP-01 challenge storage
 ├── Dns01ChallengeStore.cs           # DNS-01 challenge storage
 ├── TlsAlpn01ChallengeStore.cs       # TLS-ALPN-01 challenge storage
@@ -38,7 +38,7 @@ src/Xiangyao.Acme/
 
 ### 3. **Certificate Managers**
 - **AcmeCertificateManager**: Simple HTTP-01 only manager
-- **AcmeCertificateManagerV2**: Advanced manager with:
+- **AcmeCertificateManager**: Advanced manager with:
   - All three challenge types support
   - Configurable preferred challenge with automatic fallback
   - Wildcard certificate support via DNS-01
@@ -148,7 +148,7 @@ var options = new AcmeCertificateManagerOptions {
         zoneId: "your-zone-id")
 };
 
-var manager = new AcmeCertificateManagerV2(
+var manager = new AcmeCertificateManager(
     client,
     "admin@example.com",
     "./certificates",
@@ -171,7 +171,7 @@ var options = new AcmeCertificateManagerOptions {
     TlsAlpn01Store = new TlsAlpn01ChallengeStore()
 };
 
-var manager = new AcmeCertificateManagerV2(
+var manager = new AcmeCertificateManager(
     client,
     "admin@example.com",
     "./certificates",
@@ -284,7 +284,7 @@ var client = new AcmeClient(
 1. **Xiangyao.Acme.csproj** - Project file targeting net8.0 and net10.0
 2. **AcmeClient.cs** - Core ACME protocol client (~350 lines)
 3. **AcmeCertificateManager.cs** - HTTP-01 certificate manager (~160 lines)
-4. **AcmeCertificateManagerV2.cs** - Multi-challenge certificate manager (~270 lines)
+4. **AcmeCertificateManager.cs** - Multi-challenge certificate manager (~270 lines)
 5. **Http01ChallengeStore.cs** - HTTP-01 challenge storage (~30 lines)
 6. **Dns01ChallengeStore.cs** - DNS-01 challenge storage (~30 lines)
 7. **TlsAlpn01ChallengeStore.cs** - TLS-ALPN-01 challenge storage (~70 lines)
@@ -366,3 +366,4 @@ To use the native ACME client instead of LettuceEncrypt:
 - [RFC 7515 - JSON Web Signature](https://tools.ietf.org/html/rfc7515)
 - [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
 - [BouncyCastle Cryptography](https://www.bouncycastle.org/csharp/)
+

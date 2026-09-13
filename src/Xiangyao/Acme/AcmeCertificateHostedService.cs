@@ -51,7 +51,7 @@ internal sealed class AcmeCertificateHostedService(
       ExternalAccountBinding = currentExternalAccountBinding,
     };
 
-    var manager = new AcmeCertificateManagerV2(
+    var manager = new AcmeCertificateManager(
       client,
       email,
       certificateDirectory,
@@ -109,3 +109,4 @@ internal sealed class AcmeCertificateHostedService(
     return this.certificate.NotAfter - DateTime.UtcNow < TimeSpan.FromDays(30);
   }
 }
+

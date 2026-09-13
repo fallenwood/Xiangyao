@@ -32,7 +32,7 @@ A native C# ACME (Automatic Certificate Management Environment) client implement
    - **Dns01ChallengeStore**: In-memory store for DNS-01 challenges
    - **TlsAlpn01ChallengeStore**: Certificate store for TLS-ALPN-01 challenges
 
-3. **AcmeCertificateManager / AcmeCertificateManagerV2**: High-level certificate management
+3. **AcmeCertificateManager**: High-level certificate management
    - End-to-end certificate acquisition workflow
    - Automatic challenge handling
    - PFX and PEM export
@@ -89,7 +89,7 @@ var options = new AcmeCertificateManagerOptions {
         zoneId: "your-zone-id")
 };
 
-var manager = new AcmeCertificateManagerV2(
+var manager = new AcmeCertificateManager(
     client,
     "your-email@example.com",
     "./certificates",
@@ -114,7 +114,7 @@ var options = new AcmeCertificateManagerOptions {
     TlsAlpn01Store = new TlsAlpn01ChallengeStore()
 };
 
-var manager = new AcmeCertificateManagerV2(
+var manager = new AcmeCertificateManager(
     client,
     "your-email@example.com",
     "./certificates",
@@ -277,3 +277,4 @@ This ACME client can replace the `LettuceEncrypt` dependency in Xiangyao proxy. 
 - [RFC 8555 - ACME Protocol](https://tools.ietf.org/html/rfc8555)
 - [Let's Encrypt ACME Documentation](https://letsencrypt.org/docs/client-options/)
 - [JWS Specification (RFC 7515)](https://tools.ietf.org/html/rfc7515)
+

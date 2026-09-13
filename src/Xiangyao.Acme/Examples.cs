@@ -10,11 +10,16 @@ public static class UsageExamples {
   public static async Task Example1_Http01() {
     var client = new AcmeClient();
     var challengeStore = new Http01ChallengeStore();
+    var options = new AcmeCertificateManagerOptions {
+      PreferredChallengeType = ChallengeType.Http01,
+      Http01Store = challengeStore
+    };
+
     var manager = new AcmeCertificateManager(
       client,
-      challengeStore,
       "admin@example.com",
-      "./certificates");
+      "./certificates",
+      options);
 
     var domains = new[] { "example.com" };
     var certificate = await manager.ObtainCertificateAsync(domains);
@@ -30,7 +35,7 @@ public static class UsageExamples {
       DnsProvider = new ManualDnsProvider()
     };
 
-    var manager = new AcmeCertificateManagerV2(
+    var manager = new AcmeCertificateManager(
       client,
       "admin@example.com",
       "./certificates",
@@ -53,7 +58,7 @@ public static class UsageExamples {
         zoneId: "your-zone-id")
     };
 
-    var manager = new AcmeCertificateManagerV2(
+    var manager = new AcmeCertificateManager(
       client,
       "admin@example.com",
       "./certificates",
@@ -72,7 +77,7 @@ public static class UsageExamples {
       TlsAlpn01Store = new TlsAlpn01ChallengeStore()
     };
 
-    var manager = new AcmeCertificateManagerV2(
+    var manager = new AcmeCertificateManager(
       client,
       "admin@example.com",
       "./certificates",
@@ -96,7 +101,7 @@ public static class UsageExamples {
       DnsProvider = new ManualDnsProvider()
     };
 
-    var manager = new AcmeCertificateManagerV2(
+    var manager = new AcmeCertificateManager(
       client,
       "admin@example.com",
       "./certificates",
@@ -162,7 +167,7 @@ public static class UsageExamples {
       Http01Store = new Http01ChallengeStore()
     };
 
-    var manager = new AcmeCertificateManagerV2(
+    var manager = new AcmeCertificateManager(
       client,
       "test@example.com",
       "./test-certificates",
@@ -184,7 +189,7 @@ public static class UsageExamples {
         zoneId: Environment.GetEnvironmentVariable("CLOUDFLARE_ZONE_ID") ?? "")
     };
 
-    var manager = new AcmeCertificateManagerV2(
+    var manager = new AcmeCertificateManager(
       client,
       "admin@example.com",
       "./certificates",
@@ -196,5 +201,7 @@ public static class UsageExamples {
     manager.SaveCertificate(certificate, "wildcard-multi.example.com");
   }
 }
+
+
 
 
