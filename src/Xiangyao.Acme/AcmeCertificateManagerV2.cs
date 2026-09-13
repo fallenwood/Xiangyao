@@ -233,14 +233,25 @@ public class AcmeCertificateManagerV2 {
 
   private X509Certificate2 ConvertToPfx(string certificatePem, AsymmetricCipherKeyPair keyPair, string friendlyName) {
     var certParser = new BcX509CertificateParser();
-    var certificates = certParser.ReadCertificates(System.Text.Encoding.UTF8.GetBytes(certificatePem));
+    var certificates = certParser.ReadCertificates(System.Text.Encoding.UTF8.GetBytes(certificatePem))
+      .Cast<BcX509Certificate>()
+      .ToArray();
+
+    if (certificates.Length == 0) {
+      throw new AcmeException("No certificates were returned by the ACME server.");
+    }
 
     var store = new Pkcs12StoreBuilder().Build();
-    var certEntry = new X509CertificateEntry((BcX509Certificate)certificates[0]!);
-    store.SetCertificateEntry(friendlyName, certEntry);
+    var certEntries = certificates
+      .Select((certificate, index) => {
+        var certEntry = new X509CertificateEntry(certificate);
+        store.SetCertificateEntry($"{friendlyName}-{index}", certEntry);
+        return certEntry;
+      })
+      .ToArray();
 
     var keyEntry = new AsymmetricKeyEntry(keyPair.Private);
-    store.SetKeyEntry(friendlyName, keyEntry, [certEntry]);
+    store.SetKeyEntry(friendlyName, keyEntry, certEntries);
 
     using var pfxStream = new MemoryStream();
     store.Save(pfxStream, Array.Empty<char>(), new Org.BouncyCastle.Security.SecureRandom());
@@ -250,7 +261,6 @@ public class AcmeCertificateManagerV2 {
     return new X509Certificate2(pfxStream.ToArray(), "", X509KeyStorageFlags.Exportable);
 #pragma warning restore SYSLIB0057
   }
-
   public void SaveCertificate(X509Certificate2 certificate, string filename) {
     var pfxPath = Path.Combine(_certificateDirectory, $"{filename}.pfx");
     var pfxBytes = certificate.Export(X509ContentType.Pfx, "");

@@ -1,0 +1,6 @@
+files:
+  - path: 2026-09-13-acme-certificate-chain.md
+    language: en
+  - path: 2026-09-13-acme-certificate-chain.zh.md
+    language: zh
+status: implemented
