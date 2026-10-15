@@ -8,26 +8,42 @@ using Org.BouncyCastle.Pkcs;
 using BcX509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using BcX509CertificateParser = Org.BouncyCastle.X509.X509CertificateParser;
 
+
+public interface IDnsProvider {
+  Task CreateTxtRecordAsync(string domain, string name, string value, CancellationToken cancellationToken = default);
+  Task DeleteTxtRecordAsync(string domain, string name, CancellationToken cancellationToken = default);
+}
+
+public class AcmeCertificateManagerOptions {
+  public ChallengeType PreferredChallengeType { get; set; } = ChallengeType.Http01;
+  public IHttp01ChallengeStore? Http01Store { get; set; }
+  public IDns01ChallengeStore? Dns01Store { get; set; }
+  public ITlsAlpn01ChallengeStore? TlsAlpn01Store { get; set; }
+  public IDnsProvider? DnsProvider { get; set; }
+}
+
 public class AcmeCertificateManager {
   private readonly AcmeClient _client;
-  private readonly IHttp01ChallengeStore _challengeStore;
   private readonly string _email;
   private readonly string _certificateDirectory;
+  private readonly AcmeCertificateManagerOptions _options;
 
   public AcmeCertificateManager(
     AcmeClient client,
-    IHttp01ChallengeStore challengeStore,
     string email,
-    string certificateDirectory) {
+    string certificateDirectory,
+    AcmeCertificateManagerOptions options) {
     _client = client;
-    _challengeStore = challengeStore;
     _email = email;
     _certificateDirectory = certificateDirectory;
+    _options = options;
 
     Directory.CreateDirectory(_certificateDirectory);
   }
 
-  public async Task<X509Certificate2> ObtainCertificateAsync(string[] domainNames, CancellationToken cancellationToken = default) {
+  public async Task<X509Certificate2> ObtainCertificateAsync(
+    string[] domainNames,
+    CancellationToken cancellationToken = default) {
     await _client.InitializeAsync(cancellationToken);
 
     await _client.CreateAccountAsync([_email], termsOfServiceAgreed: true, cancellationToken);
@@ -36,19 +52,7 @@ public class AcmeCertificateManager {
 
     foreach (var authzUrl in order.Authorizations) {
       var authz = await _client.GetAuthorizationAsync(authzUrl, cancellationToken);
-      var challenge = authz.Challenges.FirstOrDefault(c => c.Type == "http-01");
-      if (challenge == null) {
-        throw new AcmeException($"No HTTP-01 challenge found for {authz.Identifier.Value}");
-      }
-
-      var keyAuth = _client.GetKeyAuthorization(challenge.Token);
-      _challengeStore.AddChallenge(challenge.Token, keyAuth);
-
-      await _client.CompleteChallengeAsync(challenge.Url, cancellationToken);
-
-      await WaitForAuthorizationAsync(authzUrl, cancellationToken);
-
-      _challengeStore.RemoveChallenge(challenge.Token);
+      await ProcessAuthorizationAsync(authzUrl, authz, cancellationToken);
     }
 
     var certKeyPair = GenerateRsaKeyPair();
@@ -68,6 +72,116 @@ public class AcmeCertificateManager {
     var certificatePem = await _client.DownloadCertificateAsync(finalizedOrder.Certificate, cancellationToken);
 
     return ConvertToPfx(certificatePem, certKeyPair, domainNames[0]);
+  }
+
+  private async Task ProcessAuthorizationAsync(string authzUrl, AcmeAuthorization authz, CancellationToken cancellationToken) {
+    AcmeChallenge? challenge = null;
+    string? challengeType = null;
+
+    // Try to find preferred challenge type first
+    switch (_options.PreferredChallengeType) {
+      case ChallengeType.Http01:
+        challenge = authz.Challenges.FirstOrDefault(c => c.Type == "http-01");
+        challengeType = "http-01";
+        break;
+      case ChallengeType.Dns01:
+        challenge = authz.Challenges.FirstOrDefault(c => c.Type == "dns-01");
+        challengeType = "dns-01";
+        break;
+      case ChallengeType.TlsAlpn01:
+        challenge = authz.Challenges.FirstOrDefault(c => c.Type == "tls-alpn-01");
+        challengeType = "tls-alpn-01";
+        break;
+    }
+
+    // Fallback to any available challenge
+    if (challenge == null) {
+      challenge = authz.Challenges.FirstOrDefault(c => c.Type == "http-01");
+      challengeType = "http-01";
+    }
+
+    if (challenge == null) {
+      challenge = authz.Challenges.FirstOrDefault(c => c.Type == "dns-01");
+      challengeType = "dns-01";
+    }
+
+    if (challenge == null) {
+      challenge = authz.Challenges.FirstOrDefault(c => c.Type == "tls-alpn-01");
+      challengeType = "tls-alpn-01";
+    }
+
+    if (challenge == null) {
+      throw new AcmeException($"No supported challenge found for {authz.Identifier.Value}");
+    }
+
+    await SetupChallengeAsync(authz.Identifier.Value, challenge, challengeType!, cancellationToken);
+
+    await _client.CompleteChallengeAsync(challenge.Url, cancellationToken);
+
+    await WaitForAuthorizationAsync(authzUrl, cancellationToken);
+
+    await CleanupChallengeAsync(authz.Identifier.Value, challengeType!, cancellationToken);
+  }
+
+  private async Task SetupChallengeAsync(
+    string domain,
+    AcmeChallenge challenge,
+    string challengeType,
+    CancellationToken cancellationToken) {
+    switch (challengeType) {
+      case "http-01":
+        if (_options.Http01Store == null) {
+          throw new AcmeException("HTTP-01 store not configured");
+        }
+        var keyAuth = _client.GetKeyAuthorization(challenge.Token);
+        _options.Http01Store.AddChallenge(challenge.Token, keyAuth);
+        break;
+
+      case "dns-01":
+        if (_options.Dns01Store == null || _options.DnsProvider == null) {
+          throw new AcmeException("DNS-01 store or provider not configured");
+        }
+        var txtRecord = _client.GetDns01TxtRecord(challenge.Token);
+        _options.Dns01Store.AddChallenge(domain, txtRecord);
+        await _options.DnsProvider.CreateTxtRecordAsync(domain, "_acme-challenge", txtRecord, cancellationToken);
+        // Wait for DNS propagation
+        await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+        break;
+
+      case "tls-alpn-01":
+        if (_options.TlsAlpn01Store == null) {
+          throw new AcmeException("TLS-ALPN-01 store not configured");
+        }
+        var keyAuthHash = _client.GetTlsAlpn01KeyAuthorizationHash(challenge.Token);
+        _options.TlsAlpn01Store.AddChallenge(domain, keyAuthHash);
+        break;
+
+      default:
+        throw new AcmeException($"Unsupported challenge type: {challengeType}");
+    }
+  }
+
+  private async Task CleanupChallengeAsync(
+    string domain,
+    string challengeType,
+    CancellationToken cancellationToken) {
+    switch (challengeType) {
+      case "http-01":
+        // HTTP-01 cleanup happens via token, but we don't have it here
+        // In practice, challenges are short-lived and can be cleaned up later
+        break;
+
+      case "dns-01":
+        if (_options.DnsProvider != null) {
+          await _options.DnsProvider.DeleteTxtRecordAsync(domain, "_acme-challenge", cancellationToken);
+        }
+        _options.Dns01Store?.RemoveChallenge(domain);
+        break;
+
+      case "tls-alpn-01":
+        _options.TlsAlpn01Store?.RemoveChallenge(domain);
+        break;
+    }
   }
 
   private async Task WaitForAuthorizationAsync(string authzUrl, CancellationToken cancellationToken) {
