@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azurelinux/distroless/base:3.0.20260401-arm64 AS base
+FROM mcr.microsoft.com/azurelinux/core:4-2026111302-distroless-arm64 AS base
 WORKDIR /app
 EXPOSE 80
 
@@ -24,10 +24,7 @@ ENV DOTNET_RuntimeAsync=1
 
 USER root
 
-# Copy openssl libraries
-COPY --from=provider /usr/lib/libssl.so.3 /usr/lib/libssl.so.3
-COPY --from=provider /usr/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
-
-COPY --from=provider /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
+# Copy ARM64 libstdc++ and its SONAME symlink; the bare base supplies OpenSSL and libgcc.
+COPY --from=provider /usr/lib64/libstdc++.so.6* /usr/lib64/
 
 ENTRYPOINT ["./Xiangyao"]

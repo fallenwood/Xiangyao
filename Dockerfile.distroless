@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azurelinux/distroless/base:3.0.20260401 AS base
+FROM mcr.microsoft.com/azurelinux/core:4-2026111302-distroless AS base
 WORKDIR /app
 EXPOSE 80
 
@@ -22,10 +22,8 @@ ENV DOTNET_RuntimeAsync=1
 
 USER root
 
-# Copy openssl libraries
-COPY --from=build /usr/lib/libssl.so.3 /usr/lib/libssl.so.3
-COPY --from=build /usr/lib/libcrypto.so.3 /usr/lib/libcrypto.so.3
-
-COPY --from=build /usr/lib/libstdc++.so.6 /usr/lib/libstdc++.so.6
+# The bare base supplies OpenSSL and libgcc, but CoreCLR also needs libstdc++.
+# Copy both the SONAME symlink and its versioned library.
+COPY --from=build /usr/lib64/libstdc++.so.6* /usr/lib64/
 
 ENTRYPOINT ["./Xiangyao"]

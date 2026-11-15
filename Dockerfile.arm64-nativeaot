@@ -1,10 +1,10 @@
-FROM mcr.microsoft.com/azurelinux/distroless/base:3.0.20260401-arm64 AS base
+FROM mcr.microsoft.com/azurelinux/core:4-2026111302-distroless-arm64 AS base
 WORKDIR /app
 EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:11.0-azurelinux4.0 AS prepare
 WORKDIR "/src"
-RUN tdnf install xz llvm -y
+RUN dnf install -y xz llvm && dnf clean all
 
 RUN curl https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz -O && \
   tar xf zig-x86_64-linux-0.15.2.tar.xz && \
