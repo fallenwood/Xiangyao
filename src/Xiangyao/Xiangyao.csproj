@@ -1,8 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-  <Sdk Name="PublishWithSatoriGC" Version="10.0.13-satori.38707290103.1" />
+  <Sdk Name="PublishWithSatoriGC" Version="11.0.1-satori.43688079600.1" />
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <Features></Features>
+    <!-- Satori runtime and compiler packs must match the target's .NET major version. -->
+    <UseSatoriGC Condition="'$(TargetFramework)' != 'net11.0'">false</UseSatoriGC>
   </PropertyGroup>
 
   <ItemGroup>
